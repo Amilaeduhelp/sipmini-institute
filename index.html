@@ -45,6 +45,26 @@
             opacity: 0.9;
         }
 
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 2000;
+        }
+
+        .status-connected {
+            background: rgba(40, 167, 69, 0.9);
+        }
+
+        .status-disconnected {
+            background: rgba(220, 53, 69, 0.9);
+        }
+
         .content {
             padding: 20px;
         }
@@ -449,6 +469,8 @@
             font-size: 12px;
             color: #666;
             word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .btn-back {
@@ -579,9 +601,25 @@
         .duplicate-modal .modal-header h2 {
             color: #ffc107;
         }
+
+        .test-connection-btn {
+            background: #17a2b8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
+    <div id="connectionStatus" class="connection-status status-disconnected">
+        🔴 පරීක්ෂා කරමින්...
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🎓 SIPMINI INSTITUTE</h1>
@@ -611,6 +649,8 @@
                     <button class="btn btn-ok" onclick="handleOK()">✓ OK</button>
                     <button class="btn btn-clear" onclick="clearDisplay()">Clear</button>
                 </div>
+
+                <button class="test-connection-btn" onclick="testConnection()">🔍 Database පරීක්ෂා කරන්න</button>
             </div>
         </div>
     </div>
@@ -754,8 +794,8 @@
         const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+        // Global variables
+        let supabaseClient;
         let currentDisplay = '';
         let currentStudent = null;
         let paymentAmount = '0';
@@ -766,6 +806,69 @@
         let isDuplicateConfirmed = false;
 
         const DUPLICATE_CHECK_MINUTES = 90;
+
+        // Initialize Supabase with error handling
+        async function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('Supabase client initialized');
+                await testConnection();
+            } catch (error) {
+                console.error('Failed to initialize Supabase:', error);
+                updateConnectionStatus(false, 'Initialization failed');
+            }
+        }
+
+        // Test database connection
+        async function testConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.textContent = '🟡 පරීක්ෂා කරමින්...';
+            statusDiv.className = 'connection-status';
+            
+            try {
+                console.log('Testing connection to:', SUPABASE_URL);
+                
+                // Try to query the table
+                const { data, error, count } = await supabaseClient
+                    .from('sipminireport')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    console.error('Connection test error:', error);
+                    updateConnectionStatus(false, error.message);
+                    showErrorModal(
+                        'Database සම්බන්ධතා ගැටළුවක්!\n\n' + 
+                        'දෝෂය: ' + error.message + '\n\n' +
+                        'කරුණාකර පරීක්ෂා කරන්න:\n' +
+                        '1. Supabase RLS policies සක්‍රීය ද?\n' +
+                        '2. Table නම නිවැරදිද? (sipminireport)\n' +
+                        '3. API key වලංගු ද?',
+                        error
+                    );
+                    return false;
+                } else {
+                    console.log('Connection successful! Table accessible.');
+                    updateConnectionStatus(true, `${count || 0} records`);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Connection test exception:', error);
+                updateConnectionStatus(false, error.message);
+                showErrorModal('සම්බන්ධතා දෝෂයක්: ' + error.message, error);
+                return false;
+            }
+        }
+
+        function updateConnectionStatus(connected, message = '') {
+            const statusDiv = document.getElementById('connectionStatus');
+            if (connected) {
+                statusDiv.className = 'connection-status status-connected';
+                statusDiv.textContent = '🟢 සම්බන්ධිතයි' + (message ? ' - ' + message : '');
+            } else {
+                statusDiv.className = 'connection-status status-disconnected';
+                statusDiv.textContent = '🔴 අසම්බන්ධිතයි' + (message ? ' - ' + message : '');
+            }
+        }
 
         function addDigit(digit) {
             if (digit === '$') {
@@ -830,7 +933,7 @@
             const debugDiv = document.getElementById('debugInfo');
             if (debugData) {
                 debugDiv.style.display = 'block';
-                debugDiv.textContent = 'Debug: ' + JSON.stringify(debugData, null, 2);
+                debugDiv.textContent = 'Debug Info:\n' + JSON.stringify(debugData, null, 2);
             } else {
                 debugDiv.style.display = 'none';
             }
@@ -890,7 +993,7 @@
                     return { isDuplicate: true, minutesAgo: diffMinutes };
                 }
             }
-			return { isDuplicate: false };
+            return { isDuplicate: false };
         }
 
         function saveEntry(studentNo) {
@@ -1014,6 +1117,11 @@
         }
 
         async function handleOK() {
+            if (!supabaseClient) {
+                showErrorModal('Supabase සම්බන්ධ වී නැත. පිටුව නැවත පූරණය කරන්න.');
+                return;
+            }
+
             if (currentDisplay === '') {
                 showErrorModal('කරුණාකර ශිෂ්‍ය අංකයක් ඇතුළත් කරන්න');
                 return;
@@ -1041,21 +1149,58 @@
             const studentNo = pendingStudentNo;
             
             try {
-                const { data, error } = await supabase
+                console.log('Querying student:', studentNo);
+                
+                // Try exact match first
+                let { data, error } = await supabaseClient
                     .from('sipminireport')
                     .select('*')
                     .eq('studentno', studentNo);
 
+                console.log('Exact match result:', { data, error, count: data?.length });
+
+                // If no results, try case-insensitive search
+                if ((!data || data.length === 0) && !error) {
+                    console.log('Trying case-insensitive search...');
+                    const result = await supabaseClient
+                        .from('sipminireport')
+                        .select('*')
+                        .ilike('studentno', studentNo);
+                    
+                    data = result.data;
+                    error = result.error;
+                    console.log('Case-insensitive result:', { data, error, count: data?.length });
+                }
+
                 if (error) {
+                    console.error('Database error:', error);
                     showErrorModal('Database දෝෂයක්: ' + error.message, error);
                     return;
                 }
 
                 if (!data || data.length === 0) {
-                    showErrorModal('ශිෂ්‍යයා හමු නොවුණි. අංකය: ' + studentNo);
+                    // Show helpful debug info
+                    const debugInfo = {
+                        searchedFor: studentNo,
+                        searchLength: studentNo.length,
+                        tableExists: true,
+                        suggestion: 'Database එකේ තියෙන format එක පරීක්ෂා කරන්න'
+                    };
+                    
+                    showErrorModal(
+                        'ශිෂ්‍යයා හමු නොවුණි!\n\n' + 
+                        'සෙව්වේ: ' + studentNo + '\n' +
+                        'අංක දිග: ' + studentNo.length + '\n\n' +
+                        'කරුණාකර පරීක්ෂා කරන්න:\n' +
+                        '• Database එකේ අංකය නිවැරදිද?\n' +
+                        '• අමතර spaces තියෙනවා ද?\n' +
+                        '• Case එක (s0007 vs S0007) වෙනස්ද?',
+                        debugInfo
+                    );
                     return;
                 }
 
+                console.log('Found student(s):', data);
                 saveEntry(studentNo);
                 isDuplicateConfirmed = false;
 
@@ -1071,13 +1216,18 @@
                         updatedSreport = newAttendance;
                     }
 
-                    const { error: updateError } = await supabase
+                    console.log('Updating attendance for student ID:', student.id);
+                    
+                    const { error: updateError } = await supabaseClient
                         .from('sipminireport')
                         .update({ sreport: updatedSreport })
                         .eq('id', student.id);
 
                     if (updateError) {
                         console.error('Error updating attendance:', updateError);
+                        showErrorModal('පැමිණීම යාවත්කාලීන කිරීමේදී දෝෂයක්: ' + updateError.message, updateError);
+                    } else {
+                        console.log('Attendance updated successfully');
                     }
                 }
 
@@ -1093,7 +1243,8 @@
                     showSubjectSelection(availableSubjects);
                 }
             } catch (error) {
-                showErrorModal('දත්ත ගැනීමේදී දෝෂයක් සිදුවිය', error);
+                console.error('Exception in proceedWithEntry:', error);
+                showErrorModal('දත්ත ගැනීමේදී දෝෂයක් සිදුවිය: ' + error.message, error);
             }
         }
 
@@ -1197,8 +1348,6 @@
         }
 
         function showPaymentSection() {
-            const paymentStatus = checkCurrentMonthPayment(currentStudent.payment, currentStudent.monthly_fee);
-            
             document.getElementById('paymentSection').style.display = 'block';
             paymentAmount = '0';
             document.getElementById('paymentDisplay').textContent = '0';
@@ -1284,26 +1433,81 @@
                 updatedTreport = (currentTreport + parseFloat(tAmount)).toFixed(2);
                 updatedIreport = (currentIreport + parseFloat(iAmount)).toFixed(2);
 
-                const { error } = await supabase
+                console.log('=== PAYMENT UPDATE DEBUG ===');
+                console.log('Student ID:', currentStudent.id);
+                console.log('Student No:', currentStudent.studentno);
+                console.log('Old Payment:', currentStudent.payment);
+                console.log('New Payment:', updatedPayment);
+                console.log('Old T Report:', currentStudent.treport);
+                console.log('New T Report:', updatedTreport);
+                console.log('Old I Report:', currentStudent.ireport);
+                console.log('New I Report:', updatedIreport);
+
+                const { data, error } = await supabaseClient
                     .from('sipminireport')
                     .update({ 
                         payment: updatedPayment,
                         treport: updatedTreport,
                         ireport: updatedIreport
                     })
-                    .eq('id', currentStudent.id);
+                    .eq('id', currentStudent.id)
+                    .select(); // Important: Add .select() to verify update
 
-                if (error) throw error;
+                console.log('Update response:', { data, error });
 
-                showSuccessModal(`ගෙවීම සාර්ථකව සටහන් කරන ලදී!\nමුදල: Rs. ${amount}\nT Report: +Rs. ${tAmount}\nI Report: +Rs. ${iAmount}`);
+                if (error) {
+                    console.error('Payment update error:', error);
+                    showErrorModal(
+                        'ගෙවීම save කිරීමේදී දෝෂයක්!\n\n' +
+                        'දෝෂය: ' + error.message + '\n\n' +
+                        'හේතුව:\n' +
+                        '• RLS (Row Level Security) policies නිවැරදි නැත\n' +
+                        '• UPDATE permission නැත\n\n' +
+                        'විසඳුම:\n' +
+                        'Supabase SQL Editor එකේ fix-rls-policies.sql file එක run කරන්න',
+                        { 
+                            error: error,
+                            studentId: currentStudent.id,
+                            attemptedUpdate: {
+                                payment: updatedPayment,
+                                treport: updatedTreport,
+                                ireport: updatedIreport
+                            }
+                        }
+                    );
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    console.warn('Update returned no data - policy issue?');
+                    showErrorModal(
+                        'Payment update කළ බව තහවුරු කළ නොහැක!\n\n' +
+                        'RLS policies පරීක්ෂා කරන්න:\n' +
+                        '1. Supabase → SQL Editor\n' +
+                        '2. fix-rls-policies.sql run කරන්න\n' +
+                        '3. UPDATE policy enable කරන්න'
+                    );
+                    return;
+                }
+
+                console.log('✓ Payment recorded successfully!');
+                console.log('Updated data:', data[0]);
+                
+                showSuccessModal(`✓ ගෙවීම සාර්ථකව සටහන් කරන ලදී!\n\nමුදල: Rs. ${amount}\nT Report: +Rs. ${tAmount}\nI Report: +Rs. ${iAmount}`);
                 closeStudentModal();
             } catch (error) {
-                showErrorModal('ගෙවීම සටහන් කිරීමේදී දෝෂයක් සිදුවිය', error);
+                console.error('Exception in confirmPayment:', error);
+                showErrorModal(
+                    'ගෙවීම සටහන් කිරීමේදී දෝෂයක් සිදුවිය!\n\n' + 
+                    error.message + '\n\n' +
+                    'Browser console (F12) එක පරීක්ෂා කරන්න',
+                    error
+                );
             }
         }
 
         async function processDirectPayment() {
-            showErrorModal('සෘජු ගෙවීම් ක්‍රියාත්මක කිරීමට නොහැකිය. කරුණාකර ශිෂ්‍යයා තෝරා ගෙවීම සටහන් කරන්න.');
+            showErrorModal('සෘජු ගෙවීම් ක්‍රියාත්මක කිරීමට නොහැකිය.\n\nකරුණාකර ශිෂ්‍යයා තෝරා ගෙවීම සටහන් කරන්න.');
             paymentMode = false;
             clearDisplay();
         }
@@ -1318,9 +1522,17 @@
                     closeErrorModal();
                 } else if (event.target.id === 'successModal') {
                     closeSuccessModal();
+                } else if (event.target.id === 'duplicateModal') {
+                    cancelDuplicate();
                 }
             }
         }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, initializing Supabase...');
+            initSupabase();
+        });
     </script>
 </body>
 </html>
