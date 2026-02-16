@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIPMINI INSTITUTE</title>
+    <title>Manage Students - SIPMINI</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -16,143 +16,360 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 10px;
+            padding: 20px;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 25px 20px;
-            text-align: center;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 26px;
+            margin: 0;
         }
 
-        .header p {
-            font-size: 12px;
-            opacity: 0.9;
+        .back-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 2px solid white;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
         }
 
         .connection-status {
             position: fixed;
-            top: 10px;
-            right: 10px;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
             background: rgba(0,0,0,0.7);
             color: white;
-            padding: 8px 15px;
             border-radius: 20px;
             font-size: 12px;
-            z-index: 2000;
+            z-index: 1000;
         }
 
         .status-connected {
             background: rgba(40, 167, 69, 0.9);
         }
 
-        .status-disconnected {
+        .status-error {
             background: rgba(220, 53, 69, 0.9);
         }
 
-        .content {
-            padding: 20px;
-        }
-
-        .input-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-
-        .display-box {
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            padding: 15px;
-            font-size: 28px;
-            text-align: center;
-            margin-bottom: 15px;
-            min-height: 60px;
+        .tabs-container {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+            background: #f5f5f5;
+            padding: 0;
+            overflow-x: auto;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 18px 25px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #666;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+            position: relative;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .tab:hover {
+            background: #e8e8e8;
             color: #333;
         }
 
-        .keyboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .key-btn {
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            padding: 20px;
-            font-size: 24px;
-            font-weight: bold;
+        .tab.active {
             color: #667eea;
-            cursor: pointer;
-            transition: all 0.2s;
-            touch-action: manipulation;
+            background: white;
         }
 
-        .key-btn:active {
-            transform: scale(0.95);
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
             background: #667eea;
-            color: white;
         }
 
-        .action-btns {
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .page-header h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .stats {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .helper-text {
+            font-size: 13px;
+            color: #6c757d;
+            margin-top: 5px;
         }
 
         .btn {
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            touch-action: manipulation;
-        }
-
-        .btn-ok {
+            padding: 12px 25px;
             background: #28a745;
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
         }
 
-        .btn-dollar {
-            background: #ffc107;
-            color: #000;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary { background: #667eea; }
+        .btn-secondary { background: #6c757d; }
+        .btn-danger { background: #dc3545; }
+        .btn-info { background: #17a2b8; }
+        .btn-warning { background: #ffc107; color: #000; }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .students-section {
+            margin-top: 30px;
+        }
+
+        .students-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .student-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .student-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+        }
+
+        .student-card h4 {
+            color: #333;
+            margin-bottom: 10px;
             font-size: 20px;
         }
 
-        .btn-clear {
-            background: #6c757d;
-            color: white;
+        .student-card p {
+            color: #666;
+            margin-bottom: 15px;
         }
 
-        .btn:active {
-            transform: scale(0.95);
+        .class-item {
+            margin-top: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .class-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .class-info strong {
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .class-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .class-actions .btn {
+            padding: 8px 15px;
+            margin: 0;
+            font-size: 14px;
         }
 
         .modal-overlay {
@@ -171,690 +388,427 @@
 
         .modal-overlay.show {
             display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
         .modal {
             background: white;
             border-radius: 20px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            animation: slideIn 0.3s ease-out;
+            animation: slideUp 0.3s ease;
         }
 
-        @keyframes slideIn {
+        @keyframes slideUp {
             from {
-                transform: translateY(-50px);
                 opacity: 0;
+                transform: translateY(50px);
             }
             to {
-                transform: translateY(0);
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
         .modal-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
         }
 
         .modal-header h2 {
             color: #667eea;
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 22px;
+            margin-bottom: 5px;
         }
 
         .modal-content {
             margin-bottom: 20px;
         }
 
-        .subject-card {
+        .info-box {
             background: #f8f9fa;
-            border: 3px solid #dee2e6;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .subject-card:hover {
-            background: #e9ecef;
-            transform: translateY(-2px);
-        }
-
-        .subject-card:active {
-            transform: scale(0.98);
-        }
-
-        .subject-card.selected {
-            border-color: #667eea;
-            background: #e7e9ff;
-        }
-
-        .subject-number {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 35px;
-            font-weight: bold;
-            font-size: 18px;
-            margin-right: 10px;
-        }
-
-        .subject-info {
-            display: inline-block;
-            vertical-align: middle;
-            width: calc(100% - 50px);
-        }
-
-        .subject-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            display: block;
-        }
-
-        .subject-teacher {
-            font-size: 14px;
-            color: #666;
-            margin-top: 2px;
-            display: block;
-        }
-
-        .subject-payment {
-            font-size: 13px;
-            margin-top: 5px;
-            display: block;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #dee2e6;
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 12px;
+            padding: 10px 0;
             border-bottom: 1px solid #dee2e6;
-            align-items: center;
         }
 
         .info-row:last-child {
             border-bottom: none;
         }
 
-        .info-label {
-            font-weight: bold;
-            color: #495057;
-            flex: 1;
+        .info-row strong {
+            color: #667eea;
         }
 
-        .info-value {
-            color: #212529;
-            text-align: right;
-            flex: 1;
+        .existing-classes {
+            margin-top: 15px;
         }
 
-        .payment-status {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
+        .existing-class-item {
+            background: white;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
         }
 
-        .status-paid {
-            background: #d4edda;
-            color: #155724;
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        .status-unpaid {
-            background: #f8d7da;
-            color: #721c24;
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 16px;
         }
 
-        .status-partial {
-            background: #fff3cd;
-            color: #856404;
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
         }
 
-        .balance-alert {
+        .error-details {
             background: #fff3cd;
             border: 2px solid #ffc107;
             border-radius: 10px;
             padding: 15px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .balance-alert.negative {
-            background: #f8d7da;
-            border-color: #dc3545;
-        }
-
-        .balance-alert.positive {
-            background: #d1ecf1;
-            border-color: #17a2b8;
-        }
-
-        .balance-amount {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .btn-modal-ok {
-            background: #667eea;
-            color: white;
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .btn-modal-ok:active {
-            transform: scale(0.95);
-            background: #5568d3;
-        }
-
-        .btn-payment {
-            background: #dc3545;
-            color: white;
-            width: 100%;
-            margin-top: 15px;
-            padding: 18px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .payment-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 15px;
-        }
-
-        .payment-display {
-            background: white;
-            border: 2px solid #28a745;
-            border-radius: 10px;
-            padding: 15px;
-            font-size: 24px;
-            text-align: center;
-            margin-bottom: 15px;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #28a745;
-        }
-
-        .payment-keyboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .payment-key-btn {
-            background: white;
-            border: 2px solid #28a745;
-            border-radius: 10px;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #28a745;
-            cursor: pointer;
-            transition: all 0.2s;
-            touch-action: manipulation;
-        }
-
-        .payment-key-btn:active {
-            transform: scale(0.95);
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-confirm-payment {
-            background: #ffc107;
-            color: #000;
-            width: 100%;
-            padding: 18px;
-            font-size: 22px;
-            font-weight: bold;
-            margin-top: 10px;
-            border: 3px solid #000;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-confirm-payment:active {
-            transform: scale(0.95);
-            background: #ffb300;
-        }
-
-        .error-modal .modal-header h2 {
-            color: #dc3545;
-        }
-
-        .error-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        .success-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-            color: #28a745;
-        }
-
-        .debug-info {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #666;
-            word-wrap: break-word;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #856404;
             max-height: 200px;
             overflow-y: auto;
         }
 
-        .btn-back {
-            background: #6c757d;
-            color: white;
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .payment-warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: center;
-            color: #856404;
-        }
-
-        .payment-warning.excess {
-            background: #d1ecf1;
-            border-color: #17a2b8;
-            color: #0c5460;
-        }
-
-        .payment-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn-option {
-            padding: 12px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-option:active {
-            transform: scale(0.95);
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-option.selected {
-            background: #667eea;
-            color: white;
-        }
-
-        .attendance-note {
-            background: #d1ecf1;
-            border: 2px solid #17a2b8;
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-            color: #0c5460;
-            font-size: 14px;
-        }
-
-        .duplicate-warning {
-            background: #fff3cd;
-            border: 3px solid #ffc107;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .warning-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        .time-info {
-            font-size: 20px;
-            font-weight: bold;
-            color: #856404;
-            margin: 10px 0;
-        }
-
-        .duplicate-actions {
+        .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-top: 20px;
         }
 
-        .btn-confirm {
-            background: #28a745;
-            color: white;
-            padding: 18px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
 
-        .btn-cancel {
-            background: #dc3545;
-            color: white;
-            padding: 18px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
+            .header {
+                padding: 20px;
+            }
 
-        .btn-confirm:active, .btn-cancel:active {
-            transform: scale(0.95);
-        }
+            .header h1 {
+                font-size: 20px;
+            }
 
-        .duplicate-modal .modal-header h2 {
-            color: #ffc107;
-        }
+            .tabs-container {
+                justify-content: flex-start;
+            }
 
-        .test-connection-btn {
-            background: #17a2b8;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-            width: 100%;
+            .tab {
+                padding: 15px 15px;
+                font-size: 13px;
+            }
+
+            .content-wrapper {
+                padding: 20px;
+            }
+
+            .page-header h2 {
+                font-size: 22px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .class-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .class-actions {
+                width: 100%;
+            }
+
+            .class-actions .btn {
+                flex: 1;
+            }
+
+            .modal-actions {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="connectionStatus" class="connection-status status-disconnected">
-        🔴 පරීක්ෂා කරමින්...
-    </div>
+    <div id="connectionStatus" class="connection-status">🟡 පරීක්ෂා කරමින්...</div>
 
     <div class="container">
         <div class="header">
-            <h1>🎓 SIPMINI INSTITUTE</h1>
-            <p>Student Management System</p>
+            <h1>🎓 SIPMINI Admin Panel</h1>
+            <a href="index.html" class="back-btn">🔙 පසු බස</a>
         </div>
 
-        <div class="content">
-            <div class="input-section">
-                <div class="display-box" id="display"></div>
-                
-                <div class="keyboard">
-                    <button class="key-btn" onclick="addDigit('1')">1</button>
-                    <button class="key-btn" onclick="addDigit('2')">2</button>
-                    <button class="key-btn" onclick="addDigit('3')">3</button>
-                    <button class="key-btn" onclick="addDigit('4')">4</button>
-                    <button class="key-btn" onclick="addDigit('5')">5</button>
-                    <button class="key-btn" onclick="addDigit('6')">6</button>
-                    <button class="key-btn" onclick="addDigit('7')">7</button>
-                    <button class="key-btn" onclick="addDigit('8')">8</button>
-                    <button class="key-btn" onclick="addDigit('9')">9</button>
-                    <button class="key-btn btn-dollar" onclick="addDigit('$')">💵 $</button>
-                    <button class="key-btn" onclick="addDigit('0')">0</button>
-                    <button class="key-btn" onclick="backspace()" style="background: #dc3545; color: white;">⌫</button>
-                </div>
-
-                <div class="action-btns">
-                    <button class="btn btn-ok" onclick="handleOK()">✓ OK</button>
-                    <button class="btn btn-clear" onclick="clearDisplay()">Clear</button>
-                </div>
-
-                <button class="test-connection-btn" onclick="testConnection()">🔍 Database පරීක්ෂා කරන්න</button>
-            </div>
+        <div class="tabs-container">
+            <a href="ms.html" class="tab active">Manage Students</a>
+            <a href="er.html" class="tab">Edit Records</a>
+            <a href="ar.html" class="tab">Account Reports</a>
+            <a href="sr.html" class="tab">Student Reports</a>
+            <a href="https://eduhelp-lk.github.io/sipmini-institute/" target="_blank" class="tab">Management System</a>
         </div>
-    </div>
 
-    <div id="duplicateModal" class="modal-overlay">
-        <div class="modal duplicate-modal">
-            <div class="modal-header">
-                <div class="warning-icon">⚠️</div>
-                <h2>අනතුරු ඇඟවීම</h2>
+        <div class="content-wrapper">
+            <div class="page-header">
+                <h2>📚 සිසුන් කළමනාකරණය</h2>
+                <p class="subtitle">ශිෂ්‍ය තොරතුරු එකතු කිරීම සහ කළමනාකරණය</p>
             </div>
-            <div class="modal-content">
-                <div class="duplicate-warning">
-                    <div style="font-size: 18px; margin-bottom: 10px;">මෙම අංකය දැනටමත් ඇතුළු කර ඇත</div>
-                    <div class="time-info" id="timeAgo"></div>
-                    <div style="font-size: 16px; color: #666; margin-top: 10px;" id="studentNoDisplay"></div>
+
+            <div id="alertBox" class="alert"></div>
+
+            <!-- Statistics Cards -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div class="stat-label">මුළු ශිෂ්‍ය සංඛ්‍යාව<br>Total Students</div>
                 </div>
-                <div style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 15px;">
-                    අනුමත කරන්න ද?
+                <div class="stat-card">
+                    <div class="stat-number" id="totalClasses">0</div>
+                    <div class="stat-label">මුළු පන්ති සංඛ්‍යාව<br>Total Classes</div>
                 </div>
-                <div class="duplicate-actions">
-                    <button class="btn-confirm" onclick="confirmDuplicate()">✓ අනුමත කරන්න</button>
-                    <button class="btn-cancel" onclick="cancelDuplicate()">✗ එපා</button>
+                <div class="stat-card">
+                    <div class="stat-number" id="freeClasses">0</div>
+                    <div class="stat-label">නොමිලේ පන්ති<br>Free Classes</div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div id="subjectModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>පන්තිය තෝරන්න</h2>
-                <p id="studentNameHeader" style="color: #666; font-size: 16px; margin-top: 5px;"></p>
-            </div>
-            <div class="attendance-note">
-                ✅ පැමිණීම ස්වයංක්‍රීයව සටහන් කර ඇත
-            </div>
-            <div class="modal-content" id="subjectList"></div>
-            <button class="btn-back" onclick="closeSubjectModal()">◄ ආපසු</button>
-        </div>
-    </div>
-
-    <div id="errorModal" class="modal-overlay">
-        <div class="modal error-modal">
-            <div class="modal-header">
-                <div class="error-icon">⚠️</div>
-                <h2>දෝෂයකි</h2>
-            </div>
-            <div class="modal-content">
-                <p id="errorMessage" style="text-align: center; font-size: 16px; color: #721c24;"></p>
-                <div id="debugInfo" class="debug-info" style="display: none;"></div>
-            </div>
-            <button class="btn-modal-ok" onclick="closeErrorModal()">OK</button>
-        </div>
-    </div>
-
-    <div id="studentModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>ශිෂ්‍ය වාර්තාව</h2>
-            </div>
-            <div class="modal-content">
-                <div class="attendance-note">
-                    ✅ පැමිණීම සටහන් කර ඇත
-                </div>
-                
-                <div id="balanceAlert"></div>
-                
-                <div class="info-row">
-                    <span class="info-label">නම:</span>
-                    <span class="info-value" id="studentName"></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">විෂය:</span>
-                    <span class="info-value" id="subject"></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">ගුරුවරයා:</span>
-                    <span class="info-value" id="teacherName"></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">මාසික ගාස්තුව:</span>
-                    <span class="info-value" id="monthlyFee"></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">මෙම මාසයේ ගෙවීම්:</span>
-                    <span class="info-value" id="paymentStatus"></span>
-                </div>
-
-                <button class="btn btn-payment" onclick="showPaymentSection()">💰 ගෙවීම සටහන් කරන්න</button>
-
-                <div id="paymentSection" class="payment-section" style="display: none;">
-                    <h3 style="text-align: center; margin-bottom: 15px; color: #28a745;">ගෙවන මුදල ඇතුළත් කරන්න</h3>
-                    
-                    <div class="payment-display" id="paymentDisplay">0</div>
-                    
-                    <div class="payment-keyboard">
-                        <button class="payment-key-btn" onclick="addPaymentDigit('1')">1</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('2')">2</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('3')">3</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('4')">4</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('5')">5</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('6')">6</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('7')">7</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('8')">8</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('9')">9</button>
-                        <button class="payment-key-btn" onclick="clearPaymentDisplay()">C</button>
-                        <button class="payment-key-btn" onclick="addPaymentDigit('0')">0</button>
-                        <button class="payment-key-btn" onclick="paymentBackspace()" style="background: #dc3545; color: white; border-color: #dc3545;">⌫</button>
-                    </div>
-
-                    <div id="paymentWarning"></div>
-
-                    <button class="btn-confirm-payment" onclick="processPayment()">💵 $ තහවුරු කරන්න</button>
-                    
-                    <div id="paymentOptions" style="display: none;">
-                        <div class="payment-options">
-                            <button class="btn-option" onclick="selectPaymentOption('accept')">භාරගන්න</button>
-                            <button class="btn-option" onclick="selectPaymentOption('edit')">සංස්කරණය</button>
+            <!-- Add Student Form -->
+            <div class="form-section">
+                <h3>➕ නව ශිෂ්‍යයෙකු / පන්තියක් එකතු කරන්න</h3>
+                <form id="studentForm">
+                    <div class="form-group">
+                        <label>ශිෂ්‍ය අංකය - Student Number *</label>
+                        <input type="text" id="studentno" placeholder="s0001" required readonly>
+                        <div class="helper-text">
+                            ස්වයංක්‍රීයව ජනනය වේ. එකම අංකය බහු පන්ති සඳහා භාවිතා කරයි
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label>ශිෂ්‍ය නම - Student Name *</label>
+                        <input type="text" id="studentname" placeholder="නිමල් පෙරේරා" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ගුරුවරයාගේ නම - Teacher Name *</label>
+                        <select id="teachername" required>
+                            <option value="">-- ගුරුවරයෙකු තෝරන්න --</option>
+                            <option value="මහාචාර්ය චරිත් ජයතිලක">මහාචාර්ය චරිත් ජයතිලක</option>
+                            <option value="ධම්මික ගීකියනගේ">ධම්මික ගීකියනගේ</option>
+                            <option value="දිනේෂ් හල්ඕවිට">දිනේෂ් හල්ඕවිට</option>
+                            <option value="ඉරේෂා පින්තු">ඉරේෂා පින්තු</option>
+                            <option value="හර්ෂණ ලියනආරච්චි">හර්ෂණ ලියනආරච්චි</option>
+                            <option value="නිෂා ඉහළගම">නිෂා ඉහළගම</option>
+                            <option value="අමිල උඩවත්ත">අමිල උඩවත්ත</option>
+                            <option value="සුපෙම් අල්මේදා">සුපෙම් අල්මේදා</option>
+                            <option value="ප්‍රසාධි ජයතිලක">ප්‍රසාධි ජයතිලක</option>
+                            <option value="දිල්රුක්ෂි රණසිංහ">දිල්රුක්ෂි රණසිංහ</option>
+                            <option value="ඉෂිණි පබෝදා">ඉෂිණි පබෝදා</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>විෂයය - Subject *</label>
+                        <select id="subject" required>
+                            <option value="">-- විෂයය තෝරන්න --</option>
+                            <option value="Physics">Physics - භෞතික විද්‍යාව</option>
+                            <option value="Combined Maths">Combined Maths - ඒකාබද්ධ ගණිතය</option>
+                            <option value="Chemistry">Chemistry - රසායන විද්‍යාව</option>
+                            <option value="Maths">Maths - ගණිතය</option>
+                            <option value="Sinhala">Sinhala - සිංහල</option>
+                            <option value="English">English - ඉංග්‍රීසි</option>
+                            <option value="History">History - ඉතිහාසය</option>
+                            <option value="Art">Art - චිත්‍ර</option>
+                            <option value="Science">Science - විද්‍යාව</option>
+                            <option value="Bio Science">Bio Science - ජීව විද්‍යාව</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>දුරකථන අංකය - Phone Number</label>
+                        <input type="text" id="phoneno" placeholder="0771234567">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>මාසික ගාස්තුව - Monthly Fee (Rs.) *</label>
+                            <input type="number" id="monthly_fee" placeholder="0 = නොමිලේ" required min="0" step="0.01">
+                            <div class="helper-text">0 = නොමිලේ පන්තියක්</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ප්‍රවේශ ගාස්තු - Admission Fee (Rs.)</label>
+                            <input type="number" id="admission_fee" placeholder="0" min="0" step="0.01" value="0">
+                            <div class="helper-text">ආයතනයට අයත් වේ</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>හිඟ මුදල් - Outstanding Balance (Rs.)</label>
+                        <input type="number" id="outstanding_balance" placeholder="0" min="0" step="0.01" value="0">
+                        <div class="helper-text">පවතින හිඟ මුදලට එකතු වේ</div>
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">➕ පන්තිය එකතු කරන්න</button>
+                    <button type="button" class="btn btn-secondary" id="refreshBtn">🔄 නැවුම් කරන්න</button>
+                </form>
+            </div>
+
+            <!-- Students List -->
+            <div class="students-section">
+                <h3>📋 වත්මන් ශිෂ්‍යයින් සහ පන්ති</h3>
+                <div id="studentsList">
+                    <div class="loading">📥 දත්ත පූරණය වෙමින්...</div>
                 </div>
             </div>
-            <button class="btn-modal-ok" onclick="closeStudentModal()">OK</button>
         </div>
     </div>
 
-    <div id="successModal" class="modal-overlay">
+    <!-- Existing Student Modal -->
+    <div id="existingStudentModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <div class="success-icon">✓</div>
-                <h2>සාර්ථකයි</h2>
+                <h2>⚠️ ශිෂ්‍ය අංකය දැනටමත් තිබේ</h2>
             </div>
             <div class="modal-content">
-                <p id="successMessage" style="text-align: center; font-size: 16px; color: #155724;"></p>
+                <div class="info-box">
+                    <div class="info-row">
+                        <strong>අංකය:</strong>
+                        <span id="existingStudentNo"></span>
+                    </div>
+                    <div class="info-row">
+                        <strong>නම:</strong>
+                        <span id="existingStudentName"></span>
+                    </div>
+                    <div class="info-row">
+                        <strong>දුරකථන:</strong>
+                        <span id="existingStudentPhone"></span>
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 15px; text-align: center; color: #666; font-weight: 600;">
+                    මෙම ශිෂ්‍යයා සඳහා නව පන්තියක් එකතු කරන්නද?
+                </p>
+                
+                <div class="existing-classes">
+                    <strong style="color: #667eea;">වත්මන් පන්ති:</strong>
+                    <div id="existingClassesList"></div>
+                </div>
             </div>
-            <button class="btn-modal-ok" onclick="closeSuccessModal()">OK</button>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="addNewClass()">✓ නව පන්තිය එකතු කරන්න</button>
+                <button class="btn btn-secondary" onclick="closeExistingStudentModal()">✗ අවලංගු කරන්න</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>💰 ගෙවීමක් සටහන් කරන්න</h2>
+            </div>
+            <div class="modal-content">
+                <div class="info-box">
+                    <div class="info-row">
+                        <strong>ශිෂ්‍යයා:</strong>
+                        <span id="paymentStudentName"></span>
+                    </div>
+                    <div class="info-row">
+                        <strong>විෂයය:</strong>
+                        <span id="paymentSubject"></span>
+                    </div>
+                    <div class="info-row">
+                        <strong>මාසික ගාස්තුව:</strong>
+                        <span id="paymentMonthlyFee"></span>
+                    </div>
+                    <div class="info-row">
+                        <strong>හිඟ මුදල:</strong>
+                        <span id="paymentOutstanding" style="color: #dc3545; font-weight: bold;"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ගෙවීමේ මුදල - Payment Amount (Rs.) *</label>
+                    <input type="number" id="paymentAmount" placeholder="0.00" min="0" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label>නොපැමිණීම් නිසා කපාහැරෙන මුදල - Deduction for Absence (Rs.)</label>
+                    <input type="number" id="absenceDeduction" placeholder="0.00" min="0" step="0.01" value="0">
+                    <div class="helper-text">හිඟ මුදලින් අඩු වේ</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="recordPayment()">💾 සුරකින්න</button>
+                <button class="btn btn-secondary" onclick="closePaymentModal()">❌ අවලංගු</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // Supabase Configuration
         const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
         
-        // Global variables
         let supabaseClient;
-        let currentDisplay = '';
-        let currentStudent = null;
-        let paymentAmount = '0';
-        let paymentMode = false;
-        let availableSubjects = [];
-        let pendingPaymentData = null;
-        let pendingStudentNo = null;
-        let isDuplicateConfirmed = false;
+        let pendingClassData = null;
+        let existingStudentData = null;
+        let currentPaymentClass = null;
 
-        const DUPLICATE_CHECK_MINUTES = 90;
-
-        // Initialize Supabase with error handling
+        // Initialize Supabase
         async function initSupabase() {
             try {
+                console.log('🔄 Initializing Supabase...');
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log('Supabase client initialized');
-                await testConnection();
-            } catch (error) {
-                console.error('Failed to initialize Supabase:', error);
-                updateConnectionStatus(false, 'Initialization failed');
-            }
-        }
-
-        // Test database connection
-        async function testConnection() {
-            const statusDiv = document.getElementById('connectionStatus');
-            statusDiv.textContent = '🟡 පරීක්ෂා කරමින්...';
-            statusDiv.className = 'connection-status';
-            
-            try {
-                console.log('Testing connection to:', SUPABASE_URL);
                 
-                // Try to query the table
-                const { data, error, count } = await supabaseClient
+                const { error } = await supabaseClient
                     .from('sipminireport')
-                    .select('*', { count: 'exact', head: true });
-
+                    .select('count', { count: 'exact', head: true });
+                
                 if (error) {
-                    console.error('Connection test error:', error);
+                    console.error('❌ Connection error:', error);
                     updateConnectionStatus(false, error.message);
-                    showErrorModal(
-                        'Database සම්බන්ධතා ගැටළුවක්!\n\n' + 
-                        'දෝෂය: ' + error.message + '\n\n' +
-                        'කරුණාකර පරීක්ෂා කරන්න:\n' +
-                        '1. Supabase RLS policies සක්‍රීය ද?\n' +
-                        '2. Table නම නිවැරදිද? (sipminireport)\n' +
-                        '3. API key වලංගු ද?',
-                        error
-                    );
+                    showAlert('Database connection error!', 'error');
                     return false;
-                } else {
-                    console.log('Connection successful! Table accessible.');
-                    updateConnectionStatus(true, `${count || 0} records`);
-                    return true;
                 }
+                
+                console.log('✅ Supabase connected');
+                updateConnectionStatus(true);
+                return true;
             } catch (error) {
-                console.error('Connection test exception:', error);
+                console.error('❌ Init error:', error);
                 updateConnectionStatus(false, error.message);
-                showErrorModal('සම්බන්ධතා දෝෂයක්: ' + error.message, error);
                 return false;
             }
         }
@@ -863,675 +817,398 @@
             const statusDiv = document.getElementById('connectionStatus');
             if (connected) {
                 statusDiv.className = 'connection-status status-connected';
-                statusDiv.textContent = '🟢 සම්බන්ධිතයි' + (message ? ' - ' + message : '');
+                statusDiv.textContent = '🟢 සම්බන්ධිතයි';
             } else {
-                statusDiv.className = 'connection-status status-disconnected';
-                statusDiv.textContent = '🔴 අසම්බන්ධිතයි' + (message ? ' - ' + message : '');
+                statusDiv.className = 'connection-status status-error';
+                statusDiv.textContent = '🔴 අසම්බන්ධිතයි';
             }
         }
 
-        function addDigit(digit) {
-            if (digit === '$') {
-                paymentMode = true;
-                currentDisplay = '';
-                document.getElementById('display').textContent = '$';
-                return;
-            }
-            
-            if (paymentMode) {
-                currentDisplay += digit;
-                document.getElementById('display').textContent = '$' + currentDisplay;
-            } else {
-                currentDisplay += digit;
-                document.getElementById('display').textContent = currentDisplay;
-            }
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type} show`;
+            alertBox.textContent = message;
+            setTimeout(() => alertBox.classList.remove('show'), 5000);
         }
 
-        function backspace() {
-            currentDisplay = currentDisplay.slice(0, -1);
-            if (paymentMode) {
-                document.getElementById('display').textContent = '$' + currentDisplay;
-            } else {
-                document.getElementById('display').textContent = currentDisplay;
-            }
-        }
+        async function generateStudentNumber() {
+            try {
+                const { data: students, error } = await supabaseClient
+                    .from('sipminireport')
+                    .select('studentno')
+                    .order('studentno', { ascending: false })
+                    .limit(1);
 
-        function clearDisplay() {
-            currentDisplay = '';
-            paymentMode = false;
-            document.getElementById('display').textContent = '';
-        }
+                if (error) throw error;
 
-        function addPaymentDigit(digit) {
-            if (paymentAmount === '0') {
-                paymentAmount = digit;
-            } else {
-                paymentAmount += digit;
-            }
-            document.getElementById('paymentDisplay').textContent = paymentAmount;
-            updatePaymentWarning();
-        }
-
-        function paymentBackspace() {
-            paymentAmount = paymentAmount.slice(0, -1);
-            if (paymentAmount === '') {
-                paymentAmount = '0';
-            }
-            document.getElementById('paymentDisplay').textContent = paymentAmount;
-            updatePaymentWarning();
-        }
-
-        function clearPaymentDisplay() {
-            paymentAmount = '0';
-            document.getElementById('paymentDisplay').textContent = paymentAmount;
-            document.getElementById('paymentWarning').innerHTML = '';
-            document.getElementById('paymentOptions').style.display = 'none';
-        }
-
-        function showErrorModal(message, debugData = null) {
-            document.getElementById('errorMessage').textContent = message;
-            const debugDiv = document.getElementById('debugInfo');
-            if (debugData) {
-                debugDiv.style.display = 'block';
-                debugDiv.textContent = 'Debug Info:\n' + JSON.stringify(debugData, null, 2);
-            } else {
-                debugDiv.style.display = 'none';
-            }
-            document.getElementById('errorModal').classList.add('show');
-        }
-
-        function closeErrorModal() {
-            document.getElementById('errorModal').classList.remove('show');
-        }
-
-        function closeSubjectModal() {
-            document.getElementById('subjectModal').classList.remove('show');
-            clearDisplay();
-        }
-
-        function closeStudentModal() {
-            document.getElementById('studentModal').classList.remove('show');
-            document.getElementById('paymentSection').style.display = 'none';
-            paymentAmount = '0';
-            document.getElementById('paymentDisplay').textContent = '0';
-            document.getElementById('paymentWarning').innerHTML = '';
-            document.getElementById('paymentOptions').style.display = 'none';
-            pendingPaymentData = null;
-            clearDisplay();
-        }
-
-        function showSuccessModal(message) {
-            document.getElementById('successMessage').textContent = message;
-            document.getElementById('successModal').classList.add('show');
-        }
-
-        function closeSuccessModal() {
-            document.getElementById('successModal').classList.remove('show');
-        }
-
-        function formatStudentNo(input) {
-            input = input.padStart(4, '0');
-            return 's' + input;
-        }
-
-        function formatDate(date) {
-            const d = new Date(date);
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            return `${d.getDate()}/${months[d.getMonth()]}/${d.getFullYear()}`;
-        }
-
-        function checkDuplicateEntry(studentNo) {
-            const lastEntries = JSON.parse(localStorage.getItem('lastEntries') || '{}');
-            const lastEntry = lastEntries[studentNo];
-            
-            if (lastEntry) {
-                const lastTime = new Date(lastEntry);
-                const now = new Date();
-                const diffMinutes = Math.floor((now - lastTime) / (1000 * 60));
-                
-                if (diffMinutes < DUPLICATE_CHECK_MINUTES) {
-                    return { isDuplicate: true, minutesAgo: diffMinutes };
+                let nextNumber = 1;
+                if (students && students.length > 0) {
+                    const lastNo = students[0].studentno;
+                    const numPart = parseInt(lastNo.substring(1));
+                    nextNumber = numPart + 1;
                 }
-            }
-            return { isDuplicate: false };
-        }
 
-        function saveEntry(studentNo) {
-            const lastEntries = JSON.parse(localStorage.getItem('lastEntries') || '{}');
-            lastEntries[studentNo] = new Date().toISOString();
-            localStorage.setItem('lastEntries', JSON.stringify(lastEntries));
-        }
-
-        function showDuplicateModal(studentNo, minutesAgo) {
-            document.getElementById('timeAgo').textContent = `විනාඩි ${minutesAgo}කට පෙර`;
-            document.getElementById('studentNoDisplay').textContent = `ශිෂ්‍ය අංකය: ${studentNo}`;
-            document.getElementById('duplicateModal').classList.add('show');
-        }
-
-        function confirmDuplicate() {
-            document.getElementById('duplicateModal').classList.remove('show');
-            isDuplicateConfirmed = true;
-            proceedWithEntry();
-        }
-
-        function cancelDuplicate() {
-            document.getElementById('duplicateModal').classList.remove('show');
-            pendingStudentNo = null;
-            isDuplicateConfirmed = false;
-            clearDisplay();
-        }
-
-        function calculateBalance(student) {
-            const monthlyFee = student.monthly_fee;
-            
-            if (monthlyFee === null || monthlyFee === undefined || monthlyFee === 0) {
-                return { balance: 0, type: 'free', months: 0, unpaidAmount: 0, overpaidAmount: 0 };
-            }
-
-            if (!student.sreport || student.sreport.trim() === '' || student.sreport === 'EMPTY') {
-                return { balance: 0, type: 'zero', months: 0, unpaidAmount: 0, overpaidAmount: 0 };
-            }
-
-            const payments = student.payment ? student.payment.split(',').map(p => p.trim()).filter(p => p) : [];
-            
-            const paidMonths = {};
-            let totalPaid = 0;
-            
-            payments.forEach(p => {
-                const match = p.match(/(\d+)\/(\w+)\/(\d+)-(\d+(?:\.\d+)?)/);
-                if (match) {
-                    const [, day, month, year, amount] = match;
-                    const monthKey = `${year}-${month.toLowerCase()}`;
-                    if (!paidMonths[monthKey]) {
-                        paidMonths[monthKey] = 0;
-                    }
-                    paidMonths[monthKey] += parseFloat(amount);
-                    totalPaid += parseFloat(amount);
-                }
-            });
-
-            const sreportDates = student.sreport.split(',').map(d => d.trim()).filter(d => d);
-            const attendedMonths = new Set();
-            
-            sreportDates.forEach(dateStr => {
-                const match = dateStr.match(/(\d+)\/(\w+)\/(\d+)/);
-                if (match) {
-                    const [, day, month, year] = match;
-                    attendedMonths.add(`${year}-${month.toLowerCase()}`);
-                }
-            });
-
-            let totalDue = 0;
-            let unpaidMonths = 0;
-            
-            attendedMonths.forEach(monthKey => {
-                const paidForMonth = paidMonths[monthKey] || 0;
-                if (paidForMonth < monthlyFee) {
-                    totalDue += (monthlyFee - paidForMonth);
-                    unpaidMonths++;
-                }
-            });
-
-            const balance = totalPaid - (attendedMonths.size * monthlyFee);
-
-            return {
-                balance: balance,
-                type: balance < 0 ? 'negative' : (balance > 0 ? 'positive' : 'zero'),
-                months: unpaidMonths,
-                unpaidAmount: Math.abs(Math.min(balance, 0)),
-                overpaidAmount: Math.max(balance, 0)
-            };
-        }
-
-        function checkCurrentMonthPayment(payment, monthlyFee) {
-            if (monthlyFee === null || monthlyFee === undefined || monthlyFee === 0) {
-                return { status: 'FREE CARD', paid: true, canPay: false, paidAmount: 0 };
-            }
-            
-            const now = new Date();
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const currentMonthKey = `${now.getFullYear()}-${monthNames[now.getMonth()].toLowerCase()}`;
-            
-            const payments = payment ? payment.split(',').map(p => p.trim()).filter(p => p) : [];
-            
-            let paidAmount = 0;
-            payments.forEach(p => {
-                const match = p.match(/(\d+)\/(\w+)\/(\d+)-(\d+(?:\.\d+)?)/);
-                if (match) {
-                    const [, day, month, year, amount] = match;
-                    const monthKey = `${year}-${month.toLowerCase()}`;
-                    if (monthKey === currentMonthKey) {
-                        paidAmount += parseFloat(amount);
-                    }
-                }
-            });
-
-            if (paidAmount >= monthlyFee) {
-                return { status: 'ගෙවා ඇත', paid: true, canPay: false, paidAmount: paidAmount };
-            } else if (paidAmount > 0) {
-                const shortage = monthlyFee - paidAmount;
-                return { status: `අඩු Rs. ${shortage}`, paid: false, canPay: true, paidAmount: paidAmount };
-            } else {
-                return { status: 'ගෙවා නැත', paid: false, canPay: true, paidAmount: 0 };
+                const newStudentNo = 's' + String(nextNumber).padStart(4, '0');
+                document.getElementById('studentno').value = newStudentNo;
+                console.log('📝 Generated:', newStudentNo);
+            } catch (error) {
+                console.error('❌ Error generating number:', error);
+                document.getElementById('studentno').value = 's0001';
             }
         }
 
-        async function handleOK() {
-            if (!supabaseClient) {
-                showErrorModal('Supabase සම්බන්ධ වී නැත. පිටුව නැවත පූරණය කරන්න.');
-                return;
-            }
-
-            if (currentDisplay === '') {
-                showErrorModal('කරුණාකර ශිෂ්‍ය අංකයක් ඇතුළත් කරන්න');
-                return;
-            }
-
-            if (paymentMode) {
-                await processDirectPayment();
-                return;
-            }
-
-            const studentNo = formatStudentNo(currentDisplay);
-            pendingStudentNo = studentNo;
-            
-            const duplicateCheck = checkDuplicateEntry(studentNo);
-            
-            if (duplicateCheck.isDuplicate && !isDuplicateConfirmed) {
-                showDuplicateModal(studentNo, duplicateCheck.minutesAgo);
-                return;
-            }
-            
-            await proceedWithEntry();
+        function updateStats(totalStudents, totalClasses, freeClasses) {
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('totalClasses').textContent = totalClasses;
+            document.getElementById('freeClasses').textContent = freeClasses;
         }
 
-        async function proceedWithEntry() {
-            const studentNo = pendingStudentNo;
+        async function loadStudents() {
+            console.log('📥 Loading students...');
             
             try {
-                console.log('Querying student:', studentNo);
-                
-                // Try exact match first
-                let { data, error } = await supabaseClient
+                const { data: classes, error } = await supabaseClient
                     .from('sipminireport')
                     .select('*')
-                    .eq('studentno', studentNo);
+                    .order('studentno', { ascending: true });
 
-                console.log('Exact match result:', { data, error, count: data?.length });
+                if (error) throw error;
 
-                // If no results, try case-insensitive search
-                if ((!data || data.length === 0) && !error) {
-                    console.log('Trying case-insensitive search...');
-                    const result = await supabaseClient
-                        .from('sipminireport')
-                        .select('*')
-                        .ilike('studentno', studentNo);
-                    
-                    data = result.data;
-                    error = result.error;
-                    console.log('Case-insensitive result:', { data, error, count: data?.length });
-                }
+                console.log('✅ Loaded:', classes?.length || 0, 'classes');
 
-                if (error) {
-                    console.error('Database error:', error);
-                    showErrorModal('Database දෝෂයක්: ' + error.message, error);
-                    return;
-                }
-
-                if (!data || data.length === 0) {
-                    // Show helpful debug info
-                    const debugInfo = {
-                        searchedFor: studentNo,
-                        searchLength: studentNo.length,
-                        tableExists: true,
-                        suggestion: 'Database එකේ තියෙන format එක පරීක්ෂා කරන්න'
-                    };
-                    
-                    showErrorModal(
-                        'ශිෂ්‍යයා හමු නොවුණි!\n\n' + 
-                        'සෙව්වේ: ' + studentNo + '\n' +
-                        'අංක දිග: ' + studentNo.length + '\n\n' +
-                        'කරුණාකර පරීක්ෂා කරන්න:\n' +
-                        '• Database එකේ අංකය නිවැරදිද?\n' +
-                        '• අමතර spaces තියෙනවා ද?\n' +
-                        '• Case එක (s0007 vs S0007) වෙනස්ද?',
-                        debugInfo
-                    );
-                    return;
-                }
-
-                console.log('Found student(s):', data);
-                saveEntry(studentNo);
-                isDuplicateConfirmed = false;
-
-                const now = new Date();
-                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const newAttendance = `${now.getDate()}/${monthNames[now.getMonth()]}/${now.getFullYear()}`;
-
-                for (const student of data) {
-                    let updatedSreport = student.sreport || '';
-                    if (updatedSreport && updatedSreport !== 'EMPTY') {
-                        updatedSreport += ', ' + newAttendance;
-                    } else {
-                        updatedSreport = newAttendance;
-                    }
-
-                    console.log('Updating attendance for student ID:', student.id);
-                    
-                    const { error: updateError } = await supabaseClient
-                        .from('sipminireport')
-                        .update({ sreport: updatedSreport })
-                        .eq('id', student.id);
-
-                    if (updateError) {
-                        console.error('Error updating attendance:', updateError);
-                        showErrorModal('පැමිණීම යාවත්කාලීන කිරීමේදී දෝෂයක්: ' + updateError.message, updateError);
-                    } else {
-                        console.log('Attendance updated successfully');
-                    }
-                }
-
-                if (data.length === 1) {
-                    currentStudent = data[0];
-                    currentStudent.sreport = (currentStudent.sreport || '') + (currentStudent.sreport && currentStudent.sreport !== 'EMPTY' ? ', ' : '') + newAttendance;
-                    showStudentDetails();
-                } else {
-                    availableSubjects = data.map(s => ({
-                        ...s,
-                        sreport: (s.sreport || '') + (s.sreport && s.sreport !== 'EMPTY' ? ', ' : '') + newAttendance
-                    }));
-                    showSubjectSelection(availableSubjects);
-                }
-            } catch (error) {
-                console.error('Exception in proceedWithEntry:', error);
-                showErrorModal('දත්ත ගැනීමේදී දෝෂයක් සිදුවිය: ' + error.message, error);
-            }
-        }
-
-        function showSubjectSelection(subjects) {
-            document.getElementById('studentNameHeader').textContent = `ශිෂ්‍යයා: ${subjects[0].studentname}`;
-            const subjectList = document.getElementById('subjectList');
-            subjectList.innerHTML = '';
-
-            subjects.forEach((subject, index) => {
-                const card = document.createElement('div');
-                card.className = 'subject-card';
-                card.onclick = () => selectSubject(subject);
-
-                const paymentStatus = checkCurrentMonthPayment(subject.payment, subject.monthly_fee);
-                let statusClass = 'status-unpaid';
-                if (paymentStatus.paid) {
-                    statusClass = 'status-paid';
-                } else if (paymentStatus.paidAmount > 0) {
-                    statusClass = 'status-partial';
-                }
+                const studentsList = document.getElementById('studentsList');
                 
-                card.innerHTML = `
-                    <span class="subject-number">${index + 1}</span>
-                    <div class="subject-info">
-                        <span class="subject-name">${subject.subject}</span>
-                        <span class="subject-teacher">👨‍🏫 ${subject.teachername}</span>
-                        <span class="subject-payment">
-                            <span class="payment-status ${statusClass}">${paymentStatus.status}</span>
-                        </span>
+                if (!classes || classes.length === 0) {
+                    studentsList.innerHTML = '<div class="no-data">📭 තවම ශිෂ්‍යයින් නොමැත</div>';
+                    updateStats(0, 0, 0);
+                    return;
+                }
+
+                const grouped = {};
+                classes.forEach(c => {
+                    if (!grouped[c.studentno]) {
+                        grouped[c.studentno] = {
+                            studentname: c.studentname,
+                            phoneno: c.phoneno,
+                            classes: []
+                        };
+                    }
+                    grouped[c.studentno].classes.push(c);
+                });
+
+                let totalClasses = classes.length;
+                let freeCount = 0;
+
+                studentsList.innerHTML = Object.entries(grouped).map(([studentno, data]) => {
+                    const classesHTML = data.classes.map(c => {
+                        const fee = parseFloat(c.monthly_fee) || 0;
+                        const outstanding = parseFloat(c.amount_payable) || 0;
+                        if (fee === 0) freeCount++;
+                        
+                        return `
+                            <div class="class-item">
+                                <div class="class-info">
+                                    <strong>${c.subject}</strong> - ${c.teachername}
+                                    <br>
+                                    <span style="color: #666; font-size: 14px;">
+                                        මාසික: Rs. ${fee.toFixed(2)} ${fee === 0 ? '(නොමිලේ)' : ''}
+                                        ${outstanding > 0 ? `<br><span style="color: #dc3545; font-weight: bold;">හිඟ: Rs. ${outstanding.toFixed(2)}</span>` : ''}
+                                    </span>
+                                </div>
+                                <div class="class-actions">
+                                    <button class="btn btn-primary" onclick='openPaymentModal(${JSON.stringify(c)})'>
+                                        💰 ගෙවීම
+                                    </button>
+                                    <button class="btn btn-danger" onclick="deleteClass(${c.id}, '${c.studentname.replace(/'/g, "\\'")}', '${c.subject.replace(/'/g, "\\'")}')">
+                                        🗑️ Delete
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="student-card">
+                            <h4>${data.studentname} (${studentno})</h4>
+                            <p>
+                                <strong>📞 දුරකථන:</strong> ${data.phoneno || 'N/A'} | 
+                                <strong>📚 පන්ති:</strong> ${data.classes.length}
+                            </p>
+                            ${classesHTML}
+                        </div>
+                    `;
+                }).join('');
+
+                updateStats(Object.keys(grouped).length, totalClasses, freeCount);
+            } catch (error) {
+                document.getElementById('studentsList').innerHTML = `
+                    <div class="no-data">
+                        ❌ දත්ත පූරණය කිරීමේ දෝෂයක්
+                        <div class="error-details">${error.message}</div>
                     </div>
                 `;
-
-                subjectList.appendChild(card);
-            });
-
-            document.getElementById('subjectModal').classList.add('show');
+                showAlert('Error loading data', 'error');
+                console.error('❌ Error:', error);
+            }
         }
 
-        function selectSubject(subject) {
-            currentStudent = subject;
-            document.getElementById('subjectModal').classList.remove('show');
-            showStudentDetails();
-        }
-
-        function showStudentDetails() {
-            const paymentStatus = checkCurrentMonthPayment(currentStudent.payment, currentStudent.monthly_fee);
-            const balanceInfo = calculateBalance(currentStudent);
+        document.getElementById('studentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            document.getElementById('studentName').textContent = currentStudent.studentname;
-            document.getElementById('subject').textContent = currentStudent.subject;
-            document.getElementById('teacherName').textContent = currentStudent.teachername;
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ එකතු කරමින්...';
             
-            if (currentStudent.monthly_fee === null || currentStudent.monthly_fee === undefined || currentStudent.monthly_fee === 0) {
-                document.getElementById('monthlyFee').textContent = 'FREE CARD';
-            } else {
-                document.getElementById('monthlyFee').textContent = 'Rs. ' + currentStudent.monthly_fee;
-            }
+            const admissionFee = parseFloat(document.getElementById('admission_fee').value) || 0;
+            const outstandingBalance = parseFloat(document.getElementById('outstanding_balance').value) || 0;
+            
+            const studentData = {
+                studentno: document.getElementById('studentno').value.trim().toLowerCase(),
+                studentname: document.getElementById('studentname').value.trim(),
+                teachername: document.getElementById('teachername').value.trim(),
+                subject: document.getElementById('subject').value.trim(),
+                phoneno: document.getElementById('phoneno').value.trim(),
+                monthly_fee: parseFloat(document.getElementById('monthly_fee').value) || 0,
+                admission: admissionFee,
+                ireport: admissionFee, // Admission fee goes to institute
+                amount_payable: outstandingBalance,
+                treport: 0
+            };
 
-            let statusClass = 'status-unpaid';
-            if (paymentStatus.paid) {
-                statusClass = 'status-paid';
-            } else if (paymentStatus.paidAmount > 0) {
-                statusClass = 'status-partial';
-            }
-            document.getElementById('paymentStatus').innerHTML = `<span class="payment-status ${statusClass}">${paymentStatus.status}</span>`;
-
-            const balanceAlert = document.getElementById('balanceAlert');
-            if (balanceInfo.type === 'free') {
-                balanceAlert.innerHTML = `
-                    <div class="balance-alert positive">
-                        <div style="font-size: 18px;">🎉 FREE CARD</div>
-                        <div style="font-size: 14px; margin-top: 5px;">මෙම ශිෂ්‍යයා සඳහා ගාස්තු අය නොකෙරේ</div>
-                    </div>
-                `;
-            } else if (balanceInfo.balance < 0) {
-                balanceAlert.innerHTML = `
-                    <div class="balance-alert negative">
-                        <div style="font-size: 18px;">⚠️ හිඟ මුදල</div>
-                        <div class="balance-amount">Rs. ${Math.abs(balanceInfo.balance).toFixed(2)}</div>
-                        <div style="font-size: 14px; margin-top: 5px;">ගෙවිය යුතු මුළු මුදල</div>
-                    </div>
-                `;
-            } else if (balanceInfo.balance > 0) {
-                balanceAlert.innerHTML = `
-                    <div class="balance-alert positive">
-                        <div style="font-size: 18px;">✓ අතිරේක ගෙවීම</div>
-                        <div class="balance-amount">Rs. ${balanceInfo.balance.toFixed(2)}</div>
-                        <div style="font-size: 14px; margin-top: 5px;">අතිරේකව ගෙවා ඇති මුදල</div>
-                    </div>
-                `;
-            } else {
-                balanceAlert.innerHTML = `
-                    <div class="balance-alert positive">
-                        <div style="font-size: 18px;">✓ සියල්ල නිරවුල්</div>
-                        <div style="font-size: 14px; margin-top: 5px;">හිඟයක් නොමැත</div>
-                    </div>
-                `;
-            }
-
-            document.getElementById('studentModal').classList.add('show');
-        }
-
-        function showPaymentSection() {
-            document.getElementById('paymentSection').style.display = 'block';
-            paymentAmount = '0';
-            document.getElementById('paymentDisplay').textContent = '0';
-        }
-
-        function updatePaymentWarning() {
-            const amount = parseFloat(paymentAmount);
-            const monthlyFee = currentStudent.monthly_fee;
-            const warningDiv = document.getElementById('paymentWarning');
-
-            if (amount > monthlyFee) {
-                const excess = amount - monthlyFee;
-                warningDiv.innerHTML = `
-                    <div class="payment-warning excess">
-                        <strong>⚠️ අතිරේක මුදලක්!</strong><br>
-                        මාසික ගාස්තුව: Rs. ${monthlyFee}<br>
-                        අතිරේකව: Rs. ${excess.toFixed(2)}
-                    </div>
-                `;
-            } else if (amount < monthlyFee && amount > 0) {
-                const shortage = monthlyFee - amount;
-                warningDiv.innerHTML = `
-                    <div class="payment-warning">
-                        <strong>⚠️ අඩු මුදලක්!</strong><br>
-                        මාසික ගාස්තුව: Rs. ${monthlyFee}<br>
-                        අඩුවීම: Rs. ${shortage.toFixed(2)}
-                    </div>
-                `;
-            } else {
-                warningDiv.innerHTML = '';
-            }
-        }
-
-        async function processPayment() {
-            const amount = parseFloat(paymentAmount);
-            const monthlyFee = currentStudent.monthly_fee;
-
-            if (amount === 0) {
-                showErrorModal('කරුණාකර මුදලක් ඇතුළත් කරන්න');
+            if (!studentData.studentno.match(/^s\d{4}$/)) {
+                showAlert('ශිෂ්‍ය අංකය s0001 ආකෘතියෙන් විය යුතුයි', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '➕ පන්තිය එකතු කරන්න';
                 return;
             }
 
-            if (amount !== monthlyFee) {
-                document.getElementById('paymentOptions').style.display = 'block';
-                pendingPaymentData = { amount: amount };
-                return;
-            }
-
-            await confirmPayment(amount);
-        }
-
-        function selectPaymentOption(option) {
-            if (option === 'accept') {
-                confirmPayment(pendingPaymentData.amount);
-            } else {
-                document.getElementById('paymentOptions').style.display = 'none';
-                pendingPaymentData = null;
-            }
-        }
-
-        async function confirmPayment(amount) {
             try {
-                const now = new Date();
-                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const newPayment = `${now.getDate()}/${monthNames[now.getMonth()]}/${now.getFullYear()}-${amount}`;
-
-                let updatedPayment = currentStudent.payment ? currentStudent.payment : '';
-                if (updatedPayment) {
-                    updatedPayment += ', ' + newPayment;
-                } else {
-                    updatedPayment = newPayment;
-                }
-
-                const tAmount = (amount * 0.8).toFixed(2);
-                const iAmount = (amount * 0.2).toFixed(2);
-
-                let updatedTreport = currentStudent.treport || '0';
-                let updatedIreport = currentStudent.ireport || '0';
-
-                const currentTreport = parseFloat(updatedTreport) || 0;
-                const currentIreport = parseFloat(updatedIreport) || 0;
-
-                updatedTreport = (currentTreport + parseFloat(tAmount)).toFixed(2);
-                updatedIreport = (currentIreport + parseFloat(iAmount)).toFixed(2);
-
-                console.log('=== PAYMENT UPDATE DEBUG ===');
-                console.log('Student ID:', currentStudent.id);
-                console.log('Student No:', currentStudent.studentno);
-                console.log('Old Payment:', currentStudent.payment);
-                console.log('New Payment:', updatedPayment);
-                console.log('Old T Report:', currentStudent.treport);
-                console.log('New T Report:', updatedTreport);
-                console.log('Old I Report:', currentStudent.ireport);
-                console.log('New I Report:', updatedIreport);
-
-                const { data, error } = await supabaseClient
+                const { data: existing, error: checkError } = await supabaseClient
                     .from('sipminireport')
-                    .update({ 
-                        payment: updatedPayment,
-                        treport: updatedTreport,
-                        ireport: updatedIreport
-                    })
-                    .eq('id', currentStudent.id)
-                    .select(); // Important: Add .select() to verify update
+                    .select('*')
+                    .eq('studentno', studentData.studentno);
 
-                console.log('Update response:', { data, error });
+                if (checkError) throw checkError;
 
-                if (error) {
-                    console.error('Payment update error:', error);
-                    showErrorModal(
-                        'ගෙවීම save කිරීමේදී දෝෂයක්!\n\n' +
-                        'දෝෂය: ' + error.message + '\n\n' +
-                        'හේතුව:\n' +
-                        '• RLS (Row Level Security) policies නිවැරදි නැත\n' +
-                        '• UPDATE permission නැත\n\n' +
-                        'විසඳුම:\n' +
-                        'Supabase SQL Editor එකේ fix-rls-policies.sql file එක run කරන්න',
-                        { 
-                            error: error,
-                            studentId: currentStudent.id,
-                            attemptedUpdate: {
-                                payment: updatedPayment,
-                                treport: updatedTreport,
-                                ireport: updatedIreport
-                            }
+                if (existing && existing.length > 0) {
+                    const duplicate = existing.find(s => 
+                        s.subject.toLowerCase() === studentData.subject.toLowerCase() && 
+                        s.teachername.toLowerCase() === studentData.teachername.toLowerCase()
+                    );
+
+                    if (duplicate) {
+                        showAlert('මෙම ශිෂ්‍යයා මෙම පන්තිය දැනටමත් follow කරයි!', 'error');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '➕ පන්තිය එකතු කරන්න';
+                        return;
+                    }
+
+                    // Add outstanding balance to existing
+                    if (outstandingBalance > 0) {
+                        for (const existingClass of existing) {
+                            const currentOutstanding = parseFloat(existingClass.amount_payable) || 0;
+                            await supabaseClient
+                                .from('sipminireport')
+                                .update({ amount_payable: currentOutstanding + outstandingBalance })
+                                .eq('id', existingClass.id);
                         }
-                    );
+                    }
+
+                    showExistingStudentModal(existing, studentData);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '➕ පන්තිය එකතු කරන්න';
                     return;
                 }
 
-                if (!data || data.length === 0) {
-                    console.warn('Update returned no data - policy issue?');
-                    showErrorModal(
-                        'Payment update කළ බව තහවුරු කළ නොහැක!\n\n' +
-                        'RLS policies පරීක්ෂා කරන්න:\n' +
-                        '1. Supabase → SQL Editor\n' +
-                        '2. fix-rls-policies.sql run කරන්න\n' +
-                        '3. UPDATE policy enable කරන්න'
-                    );
-                    return;
-                }
-
-                console.log('✓ Payment recorded successfully!');
-                console.log('Updated data:', data[0]);
-                
-                showSuccessModal(`✓ ගෙවීම සාර්ථකව සටහන් කරන ලදී!\n\nමුදල: Rs. ${amount}\nT Report: +Rs. ${tAmount}\nI Report: +Rs. ${iAmount}`);
-                closeStudentModal();
+                await insertStudent(studentData);
+                await generateStudentNumber();
             } catch (error) {
-                console.error('Exception in confirmPayment:', error);
-                showErrorModal(
-                    'ගෙවීම සටහන් කිරීමේදී දෝෂයක් සිදුවිය!\n\n' + 
-                    error.message + '\n\n' +
-                    'Browser console (F12) එක පරීක්ෂා කරන්න',
-                    error
-                );
+                showAlert('දෝෂයක්: ' + error.message, 'error');
+                console.error('❌ Error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '➕ පන්තිය එකතු කරන්න';
+            }
+        });
+
+        function showExistingStudentModal(existingClasses, newClassData) {
+            existingStudentData = existingClasses[0];
+            pendingClassData = newClassData;
+
+            document.getElementById('existingStudentNo').textContent = existingStudentData.studentno;
+            document.getElementById('existingStudentName').textContent = existingStudentData.studentname;
+            document.getElementById('existingStudentPhone').textContent = existingStudentData.phoneno || 'N/A';
+
+            const classList = existingClasses.map(c => 
+                `<div class="existing-class-item">
+                    <strong>${c.subject}</strong> - ${c.teachername}
+                    <br><small>Rs. ${parseFloat(c.monthly_fee) || 0}</small>
+                </div>`
+            ).join('');
+            document.getElementById('existingClassesList').innerHTML = classList;
+
+            document.getElementById('existingStudentModal').classList.add('show');
+        }
+
+        function closeExistingStudentModal() {
+            document.getElementById('existingStudentModal').classList.remove('show');
+            pendingClassData = null;
+            existingStudentData = null;
+        }
+
+        async function addNewClass() {
+            if (!pendingClassData || !existingStudentData) return;
+
+            pendingClassData.studentname = existingStudentData.studentname;
+            pendingClassData.phoneno = existingStudentData.phoneno;
+
+            await insertStudent(pendingClassData);
+            closeExistingStudentModal();
+        }
+
+        async function insertStudent(studentData) {
+            try {
+                const { error } = await supabaseClient
+                    .from('sipminireport')
+                    .insert([studentData]);
+
+                if (error) throw error;
+
+                showAlert(`✅ ${studentData.subject} පන්තිය ${studentData.studentname} සඳහා එකතු කරන ලදි!`, 'success');
+                
+                document.getElementById('studentForm').reset();
+                document.getElementById('teachername').value = '';
+                document.getElementById('subject').value = '';
+                document.getElementById('admission_fee').value = '0';
+                document.getElementById('outstanding_balance').value = '0';
+                
+                loadStudents();
+            } catch (error) {
+                showAlert('දෝෂයක්: ' + error.message, 'error');
+                console.error('❌ Insert error:', error);
             }
         }
 
-        async function processDirectPayment() {
-            showErrorModal('සෘජු ගෙවීම් ක්‍රියාත්මක කිරීමට නොහැකිය.\n\nකරුණාකර ශිෂ්‍යයා තෝරා ගෙවීම සටහන් කරන්න.');
-            paymentMode = false;
-            clearDisplay();
+        function openPaymentModal(classData) {
+            currentPaymentClass = classData;
+            
+            document.getElementById('paymentStudentName').textContent = classData.studentname;
+            document.getElementById('paymentSubject').textContent = classData.subject;
+            document.getElementById('paymentMonthlyFee').textContent = 'Rs. ' + (parseFloat(classData.monthly_fee) || 0).toFixed(2);
+            
+            const outstanding = parseFloat(classData.amount_payable) || 0;
+            document.getElementById('paymentOutstanding').textContent = 'Rs. ' + outstanding.toFixed(2);
+            
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('absenceDeduction').value = '0';
+            
+            document.getElementById('paymentModal').classList.add('show');
         }
 
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal-overlay')) {
-                if (event.target.id === 'subjectModal') {
-                    closeSubjectModal();
-                } else if (event.target.id === 'studentModal') {
-                    closeStudentModal();
-                } else if (event.target.id === 'errorModal') {
-                    closeErrorModal();
-                } else if (event.target.id === 'successModal') {
-                    closeSuccessModal();
-                } else if (event.target.id === 'duplicateModal') {
-                    cancelDuplicate();
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+            currentPaymentClass = null;
+        }
+
+        async function recordPayment() {
+            if (!currentPaymentClass) return;
+
+            const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+            const absenceDeduction = parseFloat(document.getElementById('absenceDeduction').value) || 0;
+
+            if (paymentAmount <= 0 && absenceDeduction <= 0) {
+                showAlert('කරුණාකර අගයක් ඇතුළත් කරන්න', 'error');
+                return;
+            }
+
+            try {
+                console.log('💰 Recording payment...');
+                
+                const currentOutstanding = parseFloat(currentPaymentClass.amount_payable) || 0;
+                
+                // Calculate new outstanding: subtract deduction and payment
+                let newOutstanding = currentOutstanding - absenceDeduction - paymentAmount;
+                
+                // If payment exceeds outstanding (after deduction), set to 0
+                if (newOutstanding < 0) {
+                    newOutstanding = 0;
                 }
+
+                console.log('📊 Outstanding:', currentOutstanding, '→', newOutstanding);
+                console.log('💵 Payment:', paymentAmount, '| Deduction:', absenceDeduction);
+
+                const { error } = await supabaseClient
+                    .from('sipminireport')
+                    .update({ amount_payable: newOutstanding })
+                    .eq('id', currentPaymentClass.id);
+
+                if (error) throw error;
+
+                showAlert('✅ ගෙවීම සාර්ථකව සටහන් කරන ලදි!', 'success');
+                closePaymentModal();
+                loadStudents();
+            } catch (error) {
+                showAlert('දෝෂයක්: ' + error.message, 'error');
+                console.error('❌ Payment error:', error);
             }
         }
 
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded, initializing Supabase...');
-            initSupabase();
+        async function deleteClass(id, name, subject) {
+            const confirmMessage = `ඔබට ${name} සඳහා ${subject} පන්තිය ඉවත් කිරීමට අවශ්‍යද?\n\nDelete ${subject} class for ${name}?`;
+            
+            if (!confirm(confirmMessage)) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('sipminireport')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showAlert(`✅ ${subject} පන්තිය ඉවත් කරන ලදි`, 'success');
+                loadStudents();
+            } catch (error) {
+                showAlert('ඉවත් කිරීමේ දෝෂයක්', 'error');
+                console.error('❌ Delete error:', error);
+            }
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadStudents();
+            showAlert('🔄 දත්ත නැවුම් කරන ලදි', 'success');
+        });
+
+        document.getElementById('existingStudentModal').addEventListener('click', (e) => {
+            if (e.target.id === 'existingStudentModal') {
+                closeExistingStudentModal();
+            }
+        });
+
+        document.getElementById('paymentModal').addEventListener('click', (e) => {
+            if (e.target.id === 'paymentModal') {
+                closePaymentModal();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 SIPMINI Student Management System');
+            
+            const connected = await initSupabase();
+            
+            if (connected) {
+                await generateStudentNumber();
+                await loadStudents();
+            } else {
+                document.getElementById('studentsList').innerHTML = `
+                    <div class="no-data">
+                        ❌ Database සම්බන්ධ කිරීමට නොහැකි විය
+                        <div class="error-details">
+                            Check Supabase connection and RLS policies
+                        </div>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>
