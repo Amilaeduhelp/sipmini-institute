@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Reports - SIPMINI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --whatsapp: #25D366;
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --surface3: #1e2140;
+            --border: rgba(255,255,255,0.08);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 20%, rgba(79,70,229,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
+            color: white;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -10%;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 14px; }
+
+        .header-logo {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+
+        .header-title-group .subtitle-tag {
+            font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .back-btn {
+            padding: 9px 18px;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); }
+
+        /* TABS */
+        .tabs-container {
+            display: flex;
+            background: var(--surface2);
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: none;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+        .tab.active {
+            color: #34d399;
+            border-bottom-color: #34d399;
+            background: rgba(52,211,153,0.06);
+        }
+
+        /* CONTENT */
+        .content-wrapper { padding: 30px; }
+
+        /* STATUS & ALERTS */
+        .connection-status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+        .status-success { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+        .status-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+
+        .alert { padding: 13px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+        .alert.show { display: block; animation: alertIn 0.3s ease-out; }
+        @keyframes alertIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+        .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .alert-info { background: rgba(6,182,212,0.1); color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
+
+        /* SPINNER */
+        .loading-spinner { display: none; text-align: center; padding: 50px; color: var(--text-muted); }
+        .loading-spinner.show { display: block; }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top: 3px solid var(--success);
+            border-radius: 50%;
+            width: 44px; height: 44px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* PAGE HEADER */
+        .page-header {
+            text-align: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-header h2 { color: var(--text); font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+        .page-header p { color: var(--text-muted); font-size: 14px; font-family: 'Noto Sans Sinhala', sans-serif; }
+
+        /* SEARCH SECTION */
+        .search-section {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 14px;
+            margin-bottom: 28px;
+        }
+
+        .search-title {
+            color: #34d399;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-family: 'Noto Sans Sinhala', sans-serif;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text);
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--success);
+            background: rgba(16,185,129,0.06);
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+        }
+
+        input::placeholder { color: rgba(148,163,184,0.4); }
+        select option { background: #1a1a2e; color: var(--text); }
+
+        .helper-text { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+
+        /* BUTTONS */
+        .btn {
+            padding: 11px 22px;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(79,70,229,0.35); }
+        .btn-primary:hover:not(:disabled) { background: #6366f1; }
+
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
+
+        .btn-warning { background: var(--warning); color: #1a1a2e; box-shadow: 0 4px 14px rgba(245,158,11,0.3); }
+        .btn-warning:hover:not(:disabled) { background: #fbbf24; }
+
+        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 14px rgba(37,211,102,0.3); }
+        .btn-whatsapp:hover:not(:disabled) { background: #20BA5A; }
+
+        /* REPORT CONTAINER */
+        .report-container {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            margin-top: 24px;
+            display: none;
+        }
+
+        .report-container.show {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* REPORT HEADER */
+        .report-header {
+            text-align: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-header h2 { color: #34d399; font-size: 22px; margin-bottom: 8px; }
+        .report-header h3 { color: var(--text); font-size: 20px; margin-bottom: 6px; font-weight: 700; }
+        .report-header p { color: var(--text-muted); font-size: 14px; }
+
+        /* SUMMARY SECTION */
+        .summary-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .summary-section h3 { color: #818cf8; margin-bottom: 16px; font-size: 15px; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .summary-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-number { font-size: 26px; font-weight: 700; color: #818cf8; }
+        .summary-label { font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4; }
+
+        .balance-positive { color: #34d399 !important; }
+        .balance-negative { color: #fca5a5 !important; }
+
+        /* MONTHLY BREAKDOWN */
+        .monthly-breakdown {
+            margin-top: 18px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .monthly-breakdown h4 { color: #818cf8; margin-bottom: 14px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+
+        .month-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .month-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 10px;
+            border-left: 3px solid #818cf8;
+        }
+
+        .month-card h5 { color: var(--text); font-size: 14px; margin-bottom: 10px; }
+
+        .month-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .month-detail:last-child { border-bottom: none; }
+        .month-detail-label { color: var(--text-muted); }
+        .month-detail-value { font-weight: 600; color: var(--text); }
+
+        .no-data { text-align: center; padding: 12px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+
+        /* REPORT SECTION */
+        .report-section {
+            margin-bottom: 24px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 3px solid #818cf8;
+        }
+
+        .report-section h3 { color: #818cf8; margin-bottom: 16px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+
+        /* CLASS CARDS */
+        .class-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .class-card:hover { border-color: rgba(129,140,248,0.3); transform: translateX(4px); }
+
+        .class-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .class-title { font-size: 16px; font-weight: 700; color: var(--text); }
+
+        .fee-badge {
+            background: rgba(16,185,129,0.15);
+            color: #34d399;
+            border: 1px solid rgba(16,185,129,0.25);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .fee-badge.free {
+            background: rgba(6,182,212,0.12);
+            color: #67e8f9;
+            border-color: rgba(6,182,212,0.2);
+        }
+
+        .class-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .detail-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 11px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-value { font-size: 17px; font-weight: 700; color: var(--text); }
+
+        /* REPORT ACTIONS */
+        .report-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 18px 20px; }
+            .header h1 { font-size: 17px; }
+            .tab { padding: 14px 14px; font-size: 12px; }
+            .content-wrapper { padding: 18px; }
+            .report-container { padding: 18px; }
+            .report-actions { flex-direction: column; }
+            .report-actions .btn { width: 100%; justify-content: center; }
+            .month-stats { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; }
+            .header, .tabs-container, .search-section, .report-actions, .connection-status, .alert { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-logo">🎓</div>
+                <div class="header-title-group">
+                    <div class="subtitle-tag">SIPMINI</div>
+                    <h1>Admin Panel</h1>
+                </div>
+            </div>
+            <a href="index.html" class="back-btn">← ආපසු</a>
+        </div>
+
+        <div class="tabs-container">
+            <a href="er.html" class="tab">✏️ Edit Records</a>
+            <a href="ar.html" class="tab">💰 Account Reports</a>
+            <a href="sr.html" class="tab active">📊 Student Reports</a>
+            <a href="as.html" class="tab">⚙️ Access Setting</a>
+            <a href="ms.html" class="tab">🏫 Management System</a>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="page-header">
+                <h2>📊 ශිෂ්‍ය වාර්තා</h2>
+                <p>View Student Reports — ශිෂ්‍ය වාර්තා බලන්න</p>
+            </div>
+
+            <div id="connectionStatus" class="connection-status"></div>
+            <div id="alertBox" class="alert"></div>
+
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>ශිෂ්‍යයන් පූරණය වෙමින්... Loading students...</p>
+            </div>
+
+            <div id="mainContent" style="display: none;">
+                <div class="search-section">
+                    <h3 class="search-title">
+                        <span>🔍</span>
+                        <span>ශිෂ්‍යයෙකු සොයන්න — Search Student</span>
+                    </h3>
+
+                    <div class="form-group">
+                        <label>ශිෂ්‍ය අංකය හෝ නම ටයිප් කරන්න:</label>
+                        <input type="text" id="studentSearchInput" placeholder="උදා: s0001 හෝ ශිෂ්‍ය නම...">
+                        <div class="helper-text">Type student number (s0001) or student name to search</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>හෝ ලැයිස්තුවෙන් තෝරන්න:</label>
+                        <select id="studentSelect">
+                            <option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="generateReport()">
+                        <span>📊</span>
+                        <span>වාර්තාව ජනනය කරන්න / Generate Report</span>
+                    </button>
+                </div>
+
+                <div id="reportContainer" class="report-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
+
+        let supabaseClient;
+
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                return true;
+            } catch (error) {
+                showConnectionStatus('Failed to initialize Supabase: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        function showConnectionStatus(message, type = 'success') {
+            const el = document.getElementById('connectionStatus');
+            el.className = `connection-status status-${type}`;
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+
+        function showAlert(message, type = 'success') {
+            const el = document.getElementById('alertBox');
+            el.className = `alert alert-${type} show`;
+            el.textContent = message;
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loadingSpinner').classList.toggle('show', show);
+            document.getElementById('mainContent').style.display = show ? 'none' : 'block';
+        }
+
+        async function testConnection() {
+            try {
+                const { error } = await supabaseClient.from('sipminireport').select('*', { count: 'exact', head: true });
+                if (error) throw error;
+                return true;
+            } catch { return false; }
+        }
+
+        function getLastTwoMonths() {
+            const now = new Date();
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const months = [];
+            for (let i = 0; i < 2; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ name: monthNames[d.getMonth()], year: d.getFullYear(), display: `${monthNames[d.getMonth()]} ${d.getFullYear()}` });
+            }
+            return months;
+        }
+
+        function filterDatesByMonth(dateString, month, year) {
+            if (!dateString) return [];
+            return dateString.split(',').map(d => d.trim()).filter(d => d && d.includes(`/${month}/${year}`));
+        }
+
+        async function loadStudents() {
+            showLoading(true);
+            try {
+                const { data: students, error } = await supabaseClient
+                    .from('sipminireport')
+                    .select('studentno, studentname')
+                    .order('studentname');
+
+                if (error) throw error;
+
+                const uniqueStudents = {};
+                students.forEach(s => {
+                    if (!uniqueStudents[s.studentno]) uniqueStudents[s.studentno] = s.studentname;
+                });
+
+                const select = document.getElementById('studentSelect');
+                select.innerHTML = '<option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>' +
+                    Object.entries(uniqueStudents)
+                        .sort((a, b) => a[1].localeCompare(b[1]))
+                        .map(([no, name]) => `<option value="${no}">${name} (${no})</option>`)
+                        .join('');
+
+                setupSearchFunctionality(uniqueStudents);
+                showConnectionStatus('✅ Connected successfully!', 'success');
+                showLoading(false);
+            } catch (error) {
+                showConnectionStatus('❌ Error loading data: ' + error.message, 'error');
+                showAlert('Error loading students: ' + error.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        function setupSearchFunctionality(uniqueStudents) {
+            const searchInput = document.getElementById('studentSearchInput');
+            const select = document.getElementById('studentSelect');
+
+            const allOptions = '<option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>' +
+                Object.entries(uniqueStudents)
+                    .sort((a, b) => a[1].localeCompare(b[1]))
+                    .map(([no, name]) => `<option value="${no}">${name} (${no})</option>`)
+                    .join('');
+
+            searchInput.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                if (!term) { select.innerHTML = allOptions; return; }
+
+                const filtered = Object.entries(uniqueStudents).filter(([no, name]) =>
+                    no.toLowerCase().includes(term) || name.toLowerCase().includes(term)
+                );
+
+                if (filtered.length > 0) {
+                    select.innerHTML = '<option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>' +
+                        filtered.map(([no, name]) => `<option value="${no}">${name} (${no})</option>`).join('');
+                    if (filtered.length === 1) select.value = filtered[0][0];
+                } else {
+                    select.innerHTML = '<option value="">No students found</option>';
+                }
+            });
+
+            select.addEventListener('change', function () {
+                if (this.value) searchInput.value = `${uniqueStudents[this.value]} (${this.value})`;
+            });
+        }
+
+        async function generateReport() {
+            const studentNo = document.getElementById('studentSelect').value;
+            if (!studentNo) { showAlert('කරුණාකර ශිෂ්‍යයෙකු තෝරන්න / Please select a student', 'error'); return; }
+
+            const rc = document.getElementById('reportContainer');
+            rc.style.display = 'block';
+            rc.innerHTML = '<div class="loading-spinner show"><div class="spinner"></div><p style="color:var(--text-muted)">Generating report...</p></div>';
+
+            try {
+                const { data: classes, error } = await supabaseClient
+                    .from('sipminireport').select('*').eq('studentno', studentNo);
+
+                if (error) throw error;
+
+                if (!classes || classes.length === 0) {
+                    showAlert('දත්ත හමු නොවිණි / No data found', 'error');
+                    rc.innerHTML = '';
+                    rc.style.display = 'none';
+                    return;
+                }
+
+                displayReport(classes);
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+                rc.innerHTML = '';
+                rc.style.display = 'none';
+            }
+        }
+
+        function displayReport(classes) {
+            const student = classes[0];
+            const lastTwoMonths = getLastTwoMonths();
+
+            let totalClasses = classes.length;
+            let totalAttendance = 0;
+            let totalPayments = 0;
+            let totalFees = 0;
+            let totalBalance = 0;
+
+            let monthlyStats = lastTwoMonths.map(m => ({ month: m.display, attendance: 0, payments: 0 }));
+
+            classes.forEach(cls => {
+                totalFees += parseFloat(cls.monthly_fee) || 0;
+                const att = cls.sreport ? cls.sreport.split(',').filter(a => a.trim()) : [];
+                totalAttendance += att.length;
+                const pay = cls.payment ? cls.payment.split(',').filter(p => p.trim()) : [];
+                totalPayments += pay.length;
+                totalBalance += parseFloat(cls.balance_amount) || 0;
+
+                lastTwoMonths.forEach((month, i) => {
+                    monthlyStats[i].attendance += filterDatesByMonth(cls.sreport, month.name, month.year).length;
+                    monthlyStats[i].payments += filterDatesByMonth(cls.payment, month.name, month.year).length;
+                });
+            });
+
+            const reportHTML = `
+                <div class="report-header">
+                    <h2>👨‍🎓 ශිෂ්‍ය වාර්තාව — Student Report</h2>
+                    <h3>${student.studentname}</h3>
+                    <p>අංකය: ${student.studentno} | දුරකථනය: ${student.phoneno || 'N/A'}</p>
+                </div>
+
+                <div class="summary-section">
+                    <h3>📊 සම්පූර්ණ සාරාංශය — Overall Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-number">${totalClasses}</div>
+                            <div class="summary-label">පන්ති සංඛ්‍යාව<br>Total Classes</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number">${totalAttendance}</div>
+                            <div class="summary-label">සම්පූර්ණ සහභාගීත්වය<br>Total Attendance</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number">${totalPayments}</div>
+                            <div class="summary-label">සම්පූර්ණ ගෙවීම්<br>Total Payments</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number ${totalBalance < 0 ? 'balance-negative' : 'balance-positive'}">
+                                Rs. ${Math.abs(totalBalance).toFixed(2)}
+                            </div>
+                            <div class="summary-label">${totalBalance < 0 ? 'හිඟ මුදල<br>Balance Due' : 'අතිරේක<br>Advance'}</div>
+                        </div>
+                    </div>
+
+                    <div class="monthly-breakdown">
+                        <h4>📅 අවසන් මාස 2ක විස්තර — Last 2 Months Breakdown</h4>
+                        <div class="month-stats">
+                            ${monthlyStats.map(md => `
+                                <div class="month-card">
+                                    <h5>📆 ${md.month}</h5>
+                                    <div class="month-detail">
+                                        <span class="month-detail-label">සහභාගීත්වය / Attendance:</span>
+                                        <span class="month-detail-value">${md.attendance}</span>
+                                    </div>
+                                    <div class="month-detail">
+                                        <span class="month-detail-label">ගෙවීම් / Payments:</span>
+                                        <span class="month-detail-value">${md.payments}</span>
+                                    </div>
+                                    ${md.attendance === 0 && md.payments === 0 ? '<div class="no-data">මෙම මාසයේ දත්ත නැත / No data</div>' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>📚 පන්ති විස්තර — Class Details</h3>
+                    ${classes.map(cls => {
+                        const fee = parseFloat(cls.monthly_fee) || 0;
+                        const att = cls.sreport ? cls.sreport.split(',').filter(a => a.trim()) : [];
+                        const pay = cls.payment ? cls.payment.split(',').filter(p => p.trim()) : [];
+                        const balance = parseFloat(cls.balance_amount) || 0;
+                        return `
+                            <div class="class-card">
+                                <div class="class-header">
+                                    <div class="class-title">${cls.subject}</div>
+                                    <div class="fee-badge ${fee === 0 ? 'free' : ''}">${fee === 0 ? 'FREE' : 'Rs. ' + fee.toFixed(2)}</div>
+                                </div>
+                                <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px;">
+                                    <strong style="color:var(--text);">ගුරුවරයා / Teacher:</strong> ${cls.teachername}
+                                </p>
+                                <div class="class-details">
+                                    <div class="detail-item">
+                                        <div class="detail-label">Total Attendance</div>
+                                        <div class="detail-value">${att.length} days</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Total Payments</div>
+                                        <div class="detail-value">${pay.length} months</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Monthly Fee</div>
+                                        <div class="detail-value">Rs. ${fee.toFixed(2)}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Balance / ශේෂය</div>
+                                        <div class="detail-value ${balance < 0 ? 'balance-negative' : 'balance-positive'}">
+                                            ${balance < 0 ? '-' : '+'} Rs. ${Math.abs(balance).toFixed(2)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                    }).join('')}
+                </div>
+
+                <div class="report-actions">
+                    <button class="btn btn-warning" onclick="downloadPDF()">
+                        <span>📄</span><span>PDF බාගන්න / Download PDF</span>
+                    </button>
+                    <button class="btn btn-whatsapp" onclick="shareWhatsApp()">
+                        <span>📱</span><span>WhatsApp Share</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="printReport()">
+                        <span>🖨️</span><span>Print</span>
+                    </button>
+                </div>
+            `;
+
+            const rc = document.getElementById('reportContainer');
+            rc.innerHTML = reportHTML;
+            rc.classList.add('show');
+            showAlert('වාර්තාව සාර්ථකව ජනනය විය! / Report generated successfully!', 'success');
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('reportContainer');
+            html2pdf().set({
+                margin: 10,
+                filename: 'student-report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).save()
+                .then(() => showAlert('PDF downloaded successfully!', 'success'))
+                .catch(() => showAlert('Error generating PDF', 'error'));
+        }
+
+        function printReport() { window.print(); }
+
+        function shareWhatsApp() {
+            const student = document.querySelector('.report-header h3').textContent;
+            const studentNo = document.querySelector('.report-header p').textContent.split('|')[0].replace('අංකය:', '').trim();
+
+            let message = `*SIPMINI Student Report*%0A%0A`;
+            message += `👨‍🎓 *Student:* ${student}%0A`;
+            message += `🆔 *${studentNo}*%0A%0A`;
+
+            document.querySelectorAll('.summary-item').forEach(item => {
+                const number = item.querySelector('.summary-number').textContent;
+                const label = item.querySelector('.summary-label').textContent.split('\n')[0];
+                message += `${label}: ${number}%0A`;
+            });
+
+            message += `%0A_Generated from SIPMINI Portal_`;
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+        }
+
+        window.addEventListener('DOMContentLoaded', async function () {
+            if (!initSupabase()) { showLoading(false); return; }
+            const ok = await testConnection();
+            if (!ok) {
+                showConnectionStatus('❌ Cannot connect to database.', 'error');
+                showAlert('Cannot connect to database.', 'error');
+                showLoading(false);
+                return;
+            }
+            await loadStudents();
+        });
+    </script>
+</body>
+</html>

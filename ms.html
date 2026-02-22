@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management System - SIPMINI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --surface3: #1e2140;
+            --border: rgba(255,255,255,0.08);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 10px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 20%, rgba(79,70,229,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        /* CONNECTION STATUS PILL */
+        .connection-status {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 2000;
+            transition: all 0.3s;
+        }
+
+        .status-connected {
+            background: rgba(16,185,129,0.85);
+            color: white;
+            backdrop-filter: blur(8px);
+        }
+
+        .status-disconnected {
+            background: rgba(239,68,68,0.85);
+            color: white;
+            backdrop-filter: blur(8px);
+        }
+
+        /* MAIN CONTAINER */
+        .outer-wrap {
+            position: relative; z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
+            color: white;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -10%;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 14px; }
+
+        .header-logo {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+
+        .header-title-group .subtitle-tag {
+            font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .back-btn {
+            padding: 9px 18px;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        /* TABS */
+        .tabs-container {
+            display: flex;
+            background: var(--surface2);
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: none;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .tab.active {
+            color: #f472b6;
+            border-bottom-color: #f472b6;
+            background: rgba(244,114,182,0.06);
+        }
+
+        /* CONTENT AREA */
+        .content {
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* MAIN APP PANEL (keeps original narrow width for usability) */
+        .app-panel {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        /* INPUT SECTION */
+        .input-section {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            padding: 22px;
+            border-radius: 16px;
+            margin-bottom: 0;
+        }
+
+        .display-box {
+            background: rgba(255,255,255,0.04);
+            border: 2px solid rgba(129,140,248,0.4);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 30px;
+            text-align: center;
+            margin-bottom: 18px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #a5b4fc;
+            letter-spacing: 3px;
+            transition: border-color 0.2s;
+        }
+
+        .display-box:not(:empty) {
+            border-color: #818cf8;
+        }
+
+        /* KEYBOARD */
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .key-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.15s;
+            touch-action: manipulation;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .key-btn:hover { background: rgba(129,140,248,0.12); border-color: rgba(129,140,248,0.3); }
+        .key-btn:active { transform: scale(0.94); background: rgba(129,140,248,0.25); }
+
+        .key-btn.key-dollar {
+            background: rgba(245,158,11,0.12);
+            border-color: rgba(245,158,11,0.3);
+            color: #fbbf24;
+        }
+
+        .key-btn.key-delete {
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.25);
+            color: #fca5a5;
+        }
+
+        /* ACTION BUTTONS */
+        .action-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:active { transform: scale(0.96); }
+
+        .btn-ok {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+        }
+
+        .btn-ok:hover { background: #059669; }
+
+        .btn-dollar {
+            background: var(--warning);
+            color: #1a1a2e;
+            font-size: 18px;
+            box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+        }
+
+        .btn-dollar:hover { background: #fbbf24; }
+
+        .btn-clear {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-clear:hover { background: rgba(255,255,255,0.14); }
+
+        .test-connection-btn {
+            background: rgba(6,182,212,0.12);
+            color: #67e8f9;
+            border: 1px solid rgba(6,182,212,0.25);
+            padding: 11px 18px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .test-connection-btn:hover { background: rgba(6,182,212,0.2); }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+            animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .modal-header { text-align: center; margin-bottom: 20px; }
+        .modal-header h2 { color: #818cf8; font-size: 20px; margin-bottom: 6px; }
+        .modal-header p { color: var(--text-muted); font-size: 14px; }
+
+        .error-modal .modal-header h2 { color: #fca5a5; }
+        .duplicate-modal .modal-header h2 { color: #fbbf24; }
+
+        .error-icon, .warning-icon { font-size: 44px; margin-bottom: 8px; }
+        .success-icon { font-size: 44px; margin-bottom: 8px; color: var(--success); }
+
+        /* SUBJECT CARDS */
+        .subject-card {
+            background: var(--surface3);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .subject-card:hover { border-color: #818cf8; background: rgba(129,140,248,0.08); transform: translateY(-2px); }
+        .subject-card:active { transform: scale(0.98); }
+        .subject-card.selected { border-color: #818cf8; background: rgba(129,140,248,0.12); }
+
+        .subject-number {
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            background: var(--primary);
+            color: white;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 16px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .subject-info { display: inline-block; vertical-align: middle; width: calc(100% - 50px); }
+        .subject-name { font-size: 16px; font-weight: 700; color: var(--text); display: block; }
+        .subject-teacher { font-size: 13px; color: var(--text-muted); margin-top: 2px; display: block; }
+        .subject-payment { font-size: 13px; margin-top: 5px; display: block; }
+
+        /* INFO ROWS */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row:last-of-type { border-bottom: none; }
+        .info-label { font-weight: 600; color: var(--text-muted); font-size: 14px; flex: 1; }
+        .info-value { color: var(--text); font-size: 14px; text-align: right; flex: 1; }
+
+        /* PAYMENT STATUS BADGES */
+        .payment-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-paid { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+        .status-unpaid { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .status-partial { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+
+        /* BALANCE ALERTS */
+        .balance-alert {
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 14px;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+
+        .balance-alert.negative {
+            background: rgba(239,68,68,0.1);
+            border-color: rgba(239,68,68,0.25);
+        }
+
+        .balance-alert.positive {
+            background: rgba(16,185,129,0.08);
+            border-color: rgba(16,185,129,0.2);
+        }
+
+        .balance-amount { font-size: 22px; font-weight: 700; margin-top: 5px; }
+        .balance-alert.negative .balance-amount { color: #fca5a5; }
+        .balance-alert.positive .balance-amount { color: #6ee7b7; }
+
+        /* ATTENDANCE NOTE */
+        .attendance-note {
+            background: rgba(6,182,212,0.08);
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 14px;
+            text-align: center;
+            color: #67e8f9;
+            font-size: 13px;
+        }
+
+        /* PAYMENT SECTION */
+        .payment-section {
+            margin-top: 18px;
+            padding: 18px;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .payment-section h3 { text-align: center; margin-bottom: 14px; color: #6ee7b7; font-size: 15px; }
+
+        .payment-display {
+            background: rgba(16,185,129,0.08);
+            border: 2px solid rgba(16,185,129,0.3);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 26px;
+            text-align: center;
+            margin-bottom: 14px;
+            min-height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #6ee7b7;
+        }
+
+        .payment-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .payment-key-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #6ee7b7;
+            cursor: pointer;
+            transition: all 0.15s;
+            touch-action: manipulation;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .payment-key-btn:hover { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); }
+        .payment-key-btn:active { transform: scale(0.94); }
+        .payment-key-btn.pay-delete { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: #fca5a5; }
+
+        /* PAYMENT WARNING */
+        .payment-warning {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            text-align: center;
+            color: #fcd34d;
+            font-size: 13px;
+        }
+
+        .payment-warning.excess {
+            background: rgba(6,182,212,0.08);
+            border-color: rgba(6,182,212,0.2);
+            color: #67e8f9;
+        }
+
+        /* CONFIRM PAYMENT BTN */
+        .btn-confirm-payment {
+            background: var(--warning);
+            color: #1a1a2e;
+            width: 100%;
+            padding: 16px;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-confirm-payment:hover { background: #fbbf24; }
+        .btn-confirm-payment:active { transform: scale(0.97); }
+
+        /* PAYMENT OPTIONS */
+        .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+        .btn-option {
+            padding: 12px;
+            border: 1px solid rgba(129,140,248,0.35);
+            background: transparent;
+            color: #818cf8;
+            border-radius: 9px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-option:hover, .btn-option.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* MODAL BUTTONS */
+        .btn-modal-ok {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            margin-top: 4px;
+        }
+
+        .btn-modal-ok:hover { background: #6366f1; }
+        .btn-modal-ok:active { transform: scale(0.97); }
+
+        .btn-payment {
+            background: rgba(239,68,68,0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.25);
+            width: 100%;
+            margin-top: 14px;
+            padding: 16px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-payment:hover { background: rgba(239,68,68,0.25); }
+
+        .btn-back {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            width: 100%;
+            padding: 13px;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover { background: rgba(255,255,255,0.1); }
+
+        /* DUPLICATE MODAL */
+        .duplicate-warning {
+            background: rgba(245,158,11,0.1);
+            border: 2px solid rgba(245,158,11,0.3);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+            color: var(--text);
+        }
+
+        .time-info { font-size: 20px; font-weight: 700; color: #fbbf24; margin: 8px 0; }
+
+        .duplicate-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+
+        .btn-confirm {
+            background: var(--success);
+            color: white;
+            padding: 16px;
+            font-size: 17px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm:hover { background: #059669; }
+
+        .btn-cancel-dup {
+            background: rgba(239,68,68,0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.25);
+            padding: 16px;
+            font-size: 17px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel-dup:hover { background: rgba(239,68,68,0.25); }
+
+        /* DEBUG */
+        .debug-info {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            word-wrap: break-word;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 18px 16px; }
+            .header h1 { font-size: 17px; }
+            .tab { padding: 14px 13px; font-size: 12px; }
+            .content { padding: 14px; }
+            .key-btn { padding: 16px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="connectionStatus" class="connection-status status-disconnected">
+        🔴 පරීක්ෂා කරමින්...
+    </div>
+
+    <div class="outer-wrap">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <div class="header-logo">🎓</div>
+                <div class="header-title-group">
+                    <div class="subtitle-tag">SIPMINI</div>
+                    <h1>Admin Panel</h1>
+                </div>
+            </div>
+            <a href="index.html" class="back-btn">← ආපසු</a>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs-container">
+            <a href="er.html" class="tab">✏️ Edit Records</a>
+            <a href="ar.html" class="tab">💰 Account Reports</a>
+            <a href="sr.html" class="tab">📊 Student Reports</a>
+            <a href="as.html" class="tab">⚙️ Access Setting</a>
+            <a href="ms.html" class="tab active">🏫 Management System</a>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <div class="app-panel">
+                <div class="input-section">
+                    <div class="display-box" id="display"></div>
+
+                    <div class="keyboard">
+                        <button class="key-btn" onclick="addDigit('1')">1</button>
+                        <button class="key-btn" onclick="addDigit('2')">2</button>
+                        <button class="key-btn" onclick="addDigit('3')">3</button>
+                        <button class="key-btn" onclick="addDigit('4')">4</button>
+                        <button class="key-btn" onclick="addDigit('5')">5</button>
+                        <button class="key-btn" onclick="addDigit('6')">6</button>
+                        <button class="key-btn" onclick="addDigit('7')">7</button>
+                        <button class="key-btn" onclick="addDigit('8')">8</button>
+                        <button class="key-btn" onclick="addDigit('9')">9</button>
+                        <button class="key-btn key-dollar" onclick="addDigit('$')">💵 $</button>
+                        <button class="key-btn" onclick="addDigit('0')">0</button>
+                        <button class="key-btn key-delete" onclick="backspace()">⌫</button>
+                    </div>
+
+                    <div class="action-btns">
+                        <button class="btn btn-ok" onclick="handleOK()">✓ OK</button>
+                        <button class="btn btn-clear" onclick="clearDisplay()">Clear</button>
+                    </div>
+
+                    <button class="test-connection-btn" onclick="testConnection()">🔍 Database පරීක්ෂා කරන්න</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DUPLICATE MODAL -->
+    <div id="duplicateModal" class="modal-overlay">
+        <div class="modal duplicate-modal">
+            <div class="modal-header">
+                <div class="warning-icon">⚠️</div>
+                <h2>අනතුරු ඇඟවීම</h2>
+            </div>
+            <div class="modal-content">
+                <div class="duplicate-warning">
+                    <div style="font-size:16px;margin-bottom:8px;">මෙම අංකය දැනටමත් ඇතුළු කර ඇත</div>
+                    <div class="time-info" id="timeAgo"></div>
+                    <div style="font-size:14px;color:var(--text-muted);margin-top:8px;" id="studentNoDisplay"></div>
+                </div>
+                <div style="text-align:center;font-size:16px;font-weight:700;margin-bottom:14px;color:var(--text);">
+                    අනුමත කරන්න ද?
+                </div>
+                <div class="duplicate-actions">
+                    <button class="btn-confirm" onclick="confirmDuplicate()">✓ අනුමත කරන්න</button>
+                    <button class="btn-cancel-dup" onclick="cancelDuplicate()">✗ එපා</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBJECT MODAL -->
+    <div id="subjectModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>පන්තිය තෝරන්න</h2>
+                <p id="studentNameHeader"></p>
+            </div>
+            <div class="attendance-note">✅ පැමිණීම ස්වයංක්‍රීයව සටහන් කර ඇත</div>
+            <div class="modal-content" id="subjectList"></div>
+            <button class="btn-back" onclick="closeSubjectModal()">◄ ආපසු</button>
+        </div>
+    </div>
+
+    <!-- ERROR MODAL -->
+    <div id="errorModal" class="modal-overlay">
+        <div class="modal error-modal">
+            <div class="modal-header">
+                <div class="error-icon">⚠️</div>
+                <h2>දෝෂයකි</h2>
+            </div>
+            <div class="modal-content">
+                <p id="errorMessage" style="text-align:center;font-size:14px;color:#fca5a5;line-height:1.6;white-space:pre-wrap;"></p>
+                <div id="debugInfo" class="debug-info" style="display:none;"></div>
+            </div>
+            <button class="btn-modal-ok" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- STUDENT MODAL -->
+    <div id="studentModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>ශිෂ්‍ය වාර්තාව</h2>
+            </div>
+            <div class="modal-content">
+                <div class="attendance-note">✅ පැමිණීම සටහන් කර ඇත</div>
+
+                <div id="balanceAlert"></div>
+
+                <div class="info-row">
+                    <span class="info-label">නම:</span>
+                    <span class="info-value" id="studentName"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">විෂය:</span>
+                    <span class="info-value" id="subject"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ගුරුවරයා:</span>
+                    <span class="info-value" id="teacherName"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">මාසික ගාස්තුව:</span>
+                    <span class="info-value" id="monthlyFee"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">මෙම මාසයේ ගෙවීම්:</span>
+                    <span class="info-value" id="paymentStatus"></span>
+                </div>
+
+                <button class="btn-payment" onclick="showPaymentSection()">💰 ගෙවීම සටහන් කරන්න</button>
+
+                <div id="paymentSection" class="payment-section" style="display:none;">
+                    <h3>ගෙවන මුදල ඇතුළත් කරන්න</h3>
+
+                    <div class="payment-display" id="paymentDisplay">0</div>
+
+                    <div class="payment-keyboard">
+                        <button class="payment-key-btn" onclick="addPaymentDigit('1')">1</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('2')">2</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('3')">3</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('4')">4</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('5')">5</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('6')">6</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('7')">7</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('8')">8</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('9')">9</button>
+                        <button class="payment-key-btn" onclick="clearPaymentDisplay()">C</button>
+                        <button class="payment-key-btn" onclick="addPaymentDigit('0')">0</button>
+                        <button class="payment-key-btn pay-delete" onclick="paymentBackspace()">⌫</button>
+                    </div>
+
+                    <div id="paymentWarning"></div>
+
+                    <button class="btn-confirm-payment" onclick="processPayment()">💵 $ තහවුරු කරන්න</button>
+
+                    <div id="paymentOptions" style="display:none;">
+                        <div class="payment-options">
+                            <button class="btn-option" onclick="selectPaymentOption('accept')">භාරගන්න</button>
+                            <button class="btn-option" onclick="selectPaymentOption('edit')">සංස්කරණය</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-modal-ok" onclick="closeStudentModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="success-icon">✓</div>
+                <h2 style="color:#6ee7b7;">සාර්ථකයි</h2>
+            </div>
+            <div class="modal-content">
+                <p id="successMessage" style="text-align:center;font-size:15px;color:#6ee7b7;white-space:pre-wrap;line-height:1.7;"></p>
+            </div>
+            <button class="btn-modal-ok" onclick="closeSuccessModal()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
+
+        let supabaseClient;
+        let currentDisplay = '';
+        let currentStudent = null;
+        let paymentAmount = '0';
+        let paymentMode = false;
+        let availableSubjects = [];
+        let pendingPaymentData = null;
+        let pendingStudentNo = null;
+        let isDuplicateConfirmed = false;
+
+        const DUPLICATE_CHECK_MINUTES = 90;
+
+        async function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                await testConnection();
+            } catch (error) {
+                updateConnectionStatus(false, 'Initialization failed');
+            }
+        }
+
+        async function testConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.textContent = '🟡 පරීක්ෂා කරමින්...';
+            statusDiv.className = 'connection-status';
+
+            try {
+                const { data, error, count } = await supabaseClient
+                    .from('sipminireport')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    updateConnectionStatus(false, error.message);
+                    showErrorModal(
+                        'Database සම්බන්ධතා ගැටළුවක්!\n\nදෝෂය: ' + error.message +
+                        '\n\nකරුණාකර පරීක්ෂා කරන්න:\n1. Supabase RLS policies\n2. Table නම (sipminireport)\n3. API key',
+                        error
+                    );
+                    return false;
+                }
+                updateConnectionStatus(true, `${count || 0} records`);
+                return true;
+            } catch (error) {
+                updateConnectionStatus(false, error.message);
+                showErrorModal('සම්බන්ධතා දෝෂයක්: ' + error.message, error);
+                return false;
+            }
+        }
+
+        function updateConnectionStatus(connected, message = '') {
+            const el = document.getElementById('connectionStatus');
+            if (connected) {
+                el.className = 'connection-status status-connected';
+                el.textContent = '🟢 සම්බන්ධිතයි' + (message ? ' - ' + message : '');
+            } else {
+                el.className = 'connection-status status-disconnected';
+                el.textContent = '🔴 අසම්බන්ධිතයි' + (message ? ' - ' + message : '');
+            }
+        }
+
+        function addDigit(digit) {
+            if (digit === '$') {
+                paymentMode = true;
+                currentDisplay = '';
+                document.getElementById('display').textContent = '$';
+                return;
+            }
+            currentDisplay += digit;
+            document.getElementById('display').textContent = paymentMode ? '$' + currentDisplay : currentDisplay;
+        }
+
+        function backspace() {
+            currentDisplay = currentDisplay.slice(0, -1);
+            document.getElementById('display').textContent = paymentMode ? '$' + currentDisplay : currentDisplay;
+        }
+
+        function clearDisplay() {
+            currentDisplay = '';
+            paymentMode = false;
+            document.getElementById('display').textContent = '';
+        }
+
+        function addPaymentDigit(digit) {
+            paymentAmount = paymentAmount === '0' ? digit : paymentAmount + digit;
+            document.getElementById('paymentDisplay').textContent = paymentAmount;
+            updatePaymentWarning();
+        }
+
+        function paymentBackspace() {
+            paymentAmount = paymentAmount.slice(0, -1) || '0';
+            document.getElementById('paymentDisplay').textContent = paymentAmount;
+            updatePaymentWarning();
+        }
+
+        function clearPaymentDisplay() {
+            paymentAmount = '0';
+            document.getElementById('paymentDisplay').textContent = '0';
+            document.getElementById('paymentWarning').innerHTML = '';
+            document.getElementById('paymentOptions').style.display = 'none';
+        }
+
+        function showErrorModal(message, debugData = null) {
+            document.getElementById('errorMessage').textContent = message;
+            const debugDiv = document.getElementById('debugInfo');
+            if (debugData) {
+                debugDiv.style.display = 'block';
+                debugDiv.textContent = 'Debug Info:\n' + JSON.stringify(debugData, null, 2);
+            } else {
+                debugDiv.style.display = 'none';
+            }
+            document.getElementById('errorModal').classList.add('show');
+        }
+
+        function closeErrorModal() { document.getElementById('errorModal').classList.remove('show'); }
+        function closeSubjectModal() { document.getElementById('subjectModal').classList.remove('show'); clearDisplay(); }
+
+        function closeStudentModal() {
+            document.getElementById('studentModal').classList.remove('show');
+            document.getElementById('paymentSection').style.display = 'none';
+            paymentAmount = '0';
+            document.getElementById('paymentDisplay').textContent = '0';
+            document.getElementById('paymentWarning').innerHTML = '';
+            document.getElementById('paymentOptions').style.display = 'none';
+            pendingPaymentData = null;
+            clearDisplay();
+        }
+
+        function showSuccessModal(message) {
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successModal').classList.add('show');
+        }
+
+        function closeSuccessModal() { document.getElementById('successModal').classList.remove('show'); }
+
+        function formatStudentNo(input) {
+            return 's' + input.padStart(4, '0');
+        }
+
+        function checkDuplicateEntry(studentNo) {
+            const lastEntries = JSON.parse(localStorage.getItem('lastEntries') || '{}');
+            const lastEntry = lastEntries[studentNo];
+            if (lastEntry) {
+                const diffMinutes = Math.floor((new Date() - new Date(lastEntry)) / 60000);
+                if (diffMinutes < DUPLICATE_CHECK_MINUTES) return { isDuplicate: true, minutesAgo: diffMinutes };
+            }
+            return { isDuplicate: false };
+        }
+
+        function saveEntry(studentNo) {
+            const lastEntries = JSON.parse(localStorage.getItem('lastEntries') || '{}');
+            lastEntries[studentNo] = new Date().toISOString();
+            localStorage.setItem('lastEntries', JSON.stringify(lastEntries));
+        }
+
+        function showDuplicateModal(studentNo, minutesAgo) {
+            document.getElementById('timeAgo').textContent = `විනාඩි ${minutesAgo}කට පෙර`;
+            document.getElementById('studentNoDisplay').textContent = `ශිෂ්‍ය අංකය: ${studentNo}`;
+            document.getElementById('duplicateModal').classList.add('show');
+        }
+
+        function confirmDuplicate() {
+            document.getElementById('duplicateModal').classList.remove('show');
+            isDuplicateConfirmed = true;
+            proceedWithEntry();
+        }
+
+        function cancelDuplicate() {
+            document.getElementById('duplicateModal').classList.remove('show');
+            pendingStudentNo = null;
+            isDuplicateConfirmed = false;
+            clearDisplay();
+        }
+
+        function calculateBalance(student) {
+            const monthlyFee = student.monthly_fee;
+            if (!monthlyFee) return { balance: 0, type: 'free', months: 0, unpaidAmount: 0, overpaidAmount: 0 };
+            if (!student.sreport || student.sreport.trim() === '' || student.sreport === 'EMPTY')
+                return { balance: 0, type: 'zero', months: 0, unpaidAmount: 0, overpaidAmount: 0 };
+
+            const payments = student.payment ? student.payment.split(',').map(p => p.trim()).filter(Boolean) : [];
+            const paidMonths = {};
+            let totalPaid = 0;
+
+            payments.forEach(p => {
+                const match = p.match(/(\d+)\/(\w+)\/(\d+)-(\d+(?:\.\d+)?)/);
+                if (match) {
+                    const [, , month, year, amount] = match;
+                    const key = `${year}-${month.toLowerCase()}`;
+                    paidMonths[key] = (paidMonths[key] || 0) + parseFloat(amount);
+                    totalPaid += parseFloat(amount);
+                }
+            });
+
+            const sreportDates = student.sreport.split(',').map(d => d.trim()).filter(Boolean);
+            const attendedMonths = new Set();
+            sreportDates.forEach(dateStr => {
+                const match = dateStr.match(/(\d+)\/(\w+)\/(\d+)/);
+                if (match) attendedMonths.add(`${match[3]}-${match[2].toLowerCase()}`);
+            });
+
+            const balance = totalPaid - (attendedMonths.size * monthlyFee);
+            return {
+                balance,
+                type: balance < 0 ? 'negative' : (balance > 0 ? 'positive' : 'zero'),
+                months: 0, unpaidAmount: Math.abs(Math.min(balance, 0)),
+                overpaidAmount: Math.max(balance, 0)
+            };
+        }
+
+        function checkCurrentMonthPayment(payment, monthlyFee) {
+            if (!monthlyFee) return { status: 'FREE CARD', paid: true, canPay: false, paidAmount: 0 };
+
+            const now = new Date();
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const currentMonthKey = `${now.getFullYear()}-${monthNames[now.getMonth()].toLowerCase()}`;
+            const payments = payment ? payment.split(',').map(p => p.trim()).filter(Boolean) : [];
+
+            let paidAmount = 0;
+            payments.forEach(p => {
+                const match = p.match(/(\d+)\/(\w+)\/(\d+)-(\d+(?:\.\d+)?)/);
+                if (match) {
+                    const [, , month, year, amount] = match;
+                    if (`${year}-${month.toLowerCase()}` === currentMonthKey) paidAmount += parseFloat(amount);
+                }
+            });
+
+            if (paidAmount >= monthlyFee) return { status: 'ගෙවා ඇත', paid: true, canPay: false, paidAmount };
+            if (paidAmount > 0) return { status: `අඩු Rs. ${monthlyFee - paidAmount}`, paid: false, canPay: true, paidAmount };
+            return { status: 'ගෙවා නැත', paid: false, canPay: true, paidAmount: 0 };
+        }
+
+        async function handleOK() {
+            if (!supabaseClient) { showErrorModal('Supabase සම්බන්ධ වී නැත. පිටුව නැවත පූරණය කරන්න.'); return; }
+            if (currentDisplay === '') { showErrorModal('කරුණාකර ශිෂ්‍ය අංකයක් ඇතුළත් කරන්න'); return; }
+            if (paymentMode) { await processDirectPayment(); return; }
+
+            const studentNo = formatStudentNo(currentDisplay);
+            pendingStudentNo = studentNo;
+            const duplicateCheck = checkDuplicateEntry(studentNo);
+            if (duplicateCheck.isDuplicate && !isDuplicateConfirmed) {
+                showDuplicateModal(studentNo, duplicateCheck.minutesAgo);
+                return;
+            }
+            await proceedWithEntry();
+        }
+
+        async function proceedWithEntry() {
+            const studentNo = pendingStudentNo;
+            try {
+                let { data, error } = await supabaseClient.from('sipminireport').select('*').eq('studentno', studentNo);
+
+                if ((!data || data.length === 0) && !error) {
+                    const r = await supabaseClient.from('sipminireport').select('*').ilike('studentno', studentNo);
+                    data = r.data; error = r.error;
+                }
+
+                if (error) { showErrorModal('Database දෝෂයක්: ' + error.message, error); return; }
+
+                if (!data || data.length === 0) {
+                    showErrorModal(
+                        'ශිෂ්‍යයා හමු නොවුණි!\n\nසෙව්වේ: ' + studentNo +
+                        '\n\nකරුණාකර:\n• Database අංකය නිවැරදිද?\n• Format: s0001',
+                        { searchedFor: studentNo }
+                    );
+                    return;
+                }
+
+                saveEntry(studentNo);
+                isDuplicateConfirmed = false;
+
+                const now = new Date();
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const newAttendance = `${now.getDate()}/${monthNames[now.getMonth()]}/${now.getFullYear()}`;
+
+                for (const student of data) {
+                    let updatedSreport = student.sreport || '';
+                    updatedSreport = (updatedSreport && updatedSreport !== 'EMPTY')
+                        ? updatedSreport + ', ' + newAttendance
+                        : newAttendance;
+
+                    const { error: updateError } = await supabaseClient
+                        .from('sipminireport').update({ sreport: updatedSreport }).eq('id', student.id);
+
+                    if (updateError) {
+                        showErrorModal('පැමිණීම යාවත්කාලීන කිරීමේ දෝෂය: ' + updateError.message, updateError);
+                    }
+                }
+
+                if (data.length === 1) {
+                    currentStudent = data[0];
+                    currentStudent.sreport = (currentStudent.sreport && currentStudent.sreport !== 'EMPTY')
+                        ? currentStudent.sreport + ', ' + newAttendance
+                        : newAttendance;
+                    showStudentDetails();
+                } else {
+                    availableSubjects = data.map(s => ({
+                        ...s,
+                        sreport: (s.sreport && s.sreport !== 'EMPTY') ? s.sreport + ', ' + newAttendance : newAttendance
+                    }));
+                    showSubjectSelection(availableSubjects);
+                }
+            } catch (error) {
+                showErrorModal('දත්ත ගැනීමේ දෝෂය: ' + error.message, error);
+            }
+        }
+
+        function showSubjectSelection(subjects) {
+            document.getElementById('studentNameHeader').textContent = `ශිෂ්‍යයා: ${subjects[0].studentname}`;
+            const subjectList = document.getElementById('subjectList');
+            subjectList.innerHTML = '';
+
+            subjects.forEach((subject, index) => {
+                const card = document.createElement('div');
+                card.className = 'subject-card';
+                card.onclick = () => selectSubject(subject);
+
+                const paymentStatus = checkCurrentMonthPayment(subject.payment, subject.monthly_fee);
+                let statusClass = paymentStatus.paid ? 'status-paid' : (paymentStatus.paidAmount > 0 ? 'status-partial' : 'status-unpaid');
+
+                card.innerHTML = `
+                    <span class="subject-number">${index + 1}</span>
+                    <div class="subject-info">
+                        <span class="subject-name">${subject.subject}</span>
+                        <span class="subject-teacher">👨‍🏫 ${subject.teachername}</span>
+                        <span class="subject-payment">
+                            <span class="payment-status ${statusClass}">${paymentStatus.status}</span>
+                        </span>
+                    </div>`;
+                subjectList.appendChild(card);
+            });
+
+            document.getElementById('subjectModal').classList.add('show');
+        }
+
+        function selectSubject(subject) {
+            currentStudent = subject;
+            document.getElementById('subjectModal').classList.remove('show');
+            showStudentDetails();
+        }
+
+        function showStudentDetails() {
+            const paymentStatus = checkCurrentMonthPayment(currentStudent.payment, currentStudent.monthly_fee);
+            const balanceInfo = calculateBalance(currentStudent);
+
+            document.getElementById('studentName').textContent = currentStudent.studentname;
+            document.getElementById('subject').textContent = currentStudent.subject;
+            document.getElementById('teacherName').textContent = currentStudent.teachername;
+            document.getElementById('monthlyFee').textContent =
+                (!currentStudent.monthly_fee) ? 'FREE CARD' : 'Rs. ' + currentStudent.monthly_fee;
+
+            let statusClass = paymentStatus.paid ? 'status-paid' : (paymentStatus.paidAmount > 0 ? 'status-partial' : 'status-unpaid');
+            document.getElementById('paymentStatus').innerHTML =
+                `<span class="payment-status ${statusClass}">${paymentStatus.status}</span>`;
+
+            const balanceAlert = document.getElementById('balanceAlert');
+            if (balanceInfo.type === 'free') {
+                balanceAlert.innerHTML = `<div class="balance-alert positive"><div>🎉 FREE CARD</div><div style="font-size:13px;margin-top:4px;color:var(--text-muted);">ගාස්තු අය නොකෙරේ</div></div>`;
+            } else if (balanceInfo.balance < 0) {
+                balanceAlert.innerHTML = `<div class="balance-alert negative"><div>⚠️ හිඟ මුදල</div><div class="balance-amount">Rs. ${Math.abs(balanceInfo.balance).toFixed(2)}</div><div style="font-size:13px;margin-top:4px;color:var(--text-muted);">ගෙවිය යුතු මුළු මුදල</div></div>`;
+            } else if (balanceInfo.balance > 0) {
+                balanceAlert.innerHTML = `<div class="balance-alert positive"><div>✓ අතිරේක ගෙවීම</div><div class="balance-amount">Rs. ${balanceInfo.balance.toFixed(2)}</div><div style="font-size:13px;margin-top:4px;color:var(--text-muted);">අතිරේකව ගෙවා ඇත</div></div>`;
+            } else {
+                balanceAlert.innerHTML = `<div class="balance-alert positive"><div>✓ සියල්ල නිරවුල්</div><div style="font-size:13px;margin-top:4px;color:var(--text-muted);">හිඟයක් නොමැත</div></div>`;
+            }
+
+            document.getElementById('studentModal').classList.add('show');
+        }
+
+        function showPaymentSection() {
+            document.getElementById('paymentSection').style.display = 'block';
+            paymentAmount = '0';
+            document.getElementById('paymentDisplay').textContent = '0';
+        }
+
+        function updatePaymentWarning() {
+            const amount = parseFloat(paymentAmount);
+            const monthlyFee = currentStudent.monthly_fee;
+            const warningDiv = document.getElementById('paymentWarning');
+
+            if (amount > monthlyFee) {
+                warningDiv.innerHTML = `<div class="payment-warning excess"><strong>⚠️ අතිරේක මුදලක්!</strong><br>මාසික ගාස්තුව: Rs. ${monthlyFee}<br>අතිරේකව: Rs. ${(amount - monthlyFee).toFixed(2)}</div>`;
+            } else if (amount < monthlyFee && amount > 0) {
+                warningDiv.innerHTML = `<div class="payment-warning"><strong>⚠️ අඩු මුදලක්!</strong><br>මාසික ගාස්තුව: Rs. ${monthlyFee}<br>අඩුවීම: Rs. ${(monthlyFee - amount).toFixed(2)}</div>`;
+            } else {
+                warningDiv.innerHTML = '';
+            }
+        }
+
+        async function processPayment() {
+            const amount = parseFloat(paymentAmount);
+            if (amount === 0) { showErrorModal('කරුණාකර මුදලක් ඇතුළත් කරන්න'); return; }
+            if (amount !== currentStudent.monthly_fee) {
+                document.getElementById('paymentOptions').style.display = 'block';
+                pendingPaymentData = { amount };
+                return;
+            }
+            await confirmPayment(amount);
+        }
+
+        function selectPaymentOption(option) {
+            if (option === 'accept') {
+                confirmPayment(pendingPaymentData.amount);
+            } else {
+                document.getElementById('paymentOptions').style.display = 'none';
+                pendingPaymentData = null;
+            }
+        }
+
+        async function confirmPayment(amount) {
+            try {
+                const now = new Date();
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const newPayment = `${now.getDate()}/${monthNames[now.getMonth()]}/${now.getFullYear()}-${amount}`;
+
+                let updatedPayment = currentStudent.payment
+                    ? currentStudent.payment + ', ' + newPayment
+                    : newPayment;
+
+                const tAmount = (amount * 0.8).toFixed(2);
+                const iAmount = (amount * 0.2).toFixed(2);
+                const updatedTreport = ((parseFloat(currentStudent.treport) || 0) + parseFloat(tAmount)).toFixed(2);
+                const updatedIreport = ((parseFloat(currentStudent.ireport) || 0) + parseFloat(iAmount)).toFixed(2);
+
+                const { data, error } = await supabaseClient
+                    .from('sipminireport')
+                    .update({ payment: updatedPayment, treport: updatedTreport, ireport: updatedIreport })
+                    .eq('id', currentStudent.id)
+                    .select();
+
+                if (error) {
+                    showErrorModal('ගෙවීම save කිරීමේ දෝෂය!\n\n' + error.message +
+                        '\n\nRLS policies පරීක්ෂා කරන්න.', { error, studentId: currentStudent.id });
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    showErrorModal('Payment update කළ බව තහවුරු කළ නොහැක!\nRLS policies පරීක්ෂා කරන්න.');
+                    return;
+                }
+
+                showSuccessModal(`✓ ගෙවීම සාර්ථකව සටහන් කරන ලදී!\n\nමුදල: Rs. ${amount}\nT Report: +Rs. ${tAmount}\nI Report: +Rs. ${iAmount}`);
+                closeStudentModal();
+            } catch (error) {
+                showErrorModal('ගෙවීම සටහන් කිරීමේ දෝෂය!\n\n' + error.message, error);
+            }
+        }
+
+        async function processDirectPayment() {
+            showErrorModal('සෘජු ගෙවීම් ක්‍රියාත්මක කිරීමට නොහැකිය.\nකරුණාකර ශිෂ්‍යයා තෝරා ගෙවීම සටහන් කරන්න.');
+            paymentMode = false;
+            clearDisplay();
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.classList.contains('modal-overlay')) return;
+            const id = event.target.id;
+            if (id === 'subjectModal') closeSubjectModal();
+            else if (id === 'studentModal') closeStudentModal();
+            else if (id === 'errorModal') closeErrorModal();
+            else if (id === 'successModal') closeSuccessModal();
+            else if (id === 'duplicateModal') cancelDuplicate();
+        };
+
+        window.addEventListener('DOMContentLoaded', function () {
+            initSupabase();
+        });
+    </script>
+</body>
+</html>

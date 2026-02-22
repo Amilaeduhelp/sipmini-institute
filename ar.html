@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Reports - SIPMINI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --surface3: #1e2140;
+            --border: rgba(255,255,255,0.08);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 20%, rgba(79,70,229,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
+            color: white;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -10%;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 14px; }
+
+        .header-logo {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+
+        .header-title-group .subtitle-tag {
+            font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .back-btn {
+            padding: 9px 18px;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        /* TABS */
+        .tabs-container {
+            display: flex;
+            background: var(--surface2);
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: none;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .tab.active {
+            color: #818cf8;
+            border-bottom-color: #818cf8;
+            background: rgba(129,140,248,0.06);
+        }
+
+        /* CONTENT */
+        .content-wrapper { padding: 30px; }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 6px;
+            color: var(--text);
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* STATUS */
+        .connection-status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        .status-success {
+            background: rgba(16,185,129,0.12);
+            color: #6ee7b7;
+            border: 1px solid rgba(16,185,129,0.25);
+        }
+
+        .status-error {
+            background: rgba(239,68,68,0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+
+        .alert {
+            padding: 13px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        .alert.show { display: block; }
+        .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+        .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .alert-info { background: rgba(6,182,212,0.1); color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
+
+        /* SPINNER */
+        .loading-spinner { display: none; text-align: center; padding: 50px; color: var(--text-muted); }
+        .loading-spinner.show { display: block; }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 44px; height: 44px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* REPORT CARDS */
+        .report-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .report-card {
+            padding: 24px;
+            border-radius: 14px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+
+        .institute-card {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-color: rgba(129,140,248,0.3);
+        }
+
+        .teacher-card {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            border-color: rgba(6,182,212,0.3);
+        }
+
+        .report-card h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .report-card p { opacity: 0.85; font-size: 13px; line-height: 1.5; }
+
+        .report-card .features {
+            margin-top: 14px;
+            font-size: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 10px 14px;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        /* SELECTION BOX */
+        .selection-box {
+            display: none;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            padding: 22px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .selection-box.show { display: block; }
+
+        .selection-box h3 { color: #818cf8; margin-bottom: 16px; font-size: 16px; }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text);
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+            background: rgba(79,70,229,0.08);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+        }
+
+        select option { background: #1a1a2e; color: var(--text); }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text);
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--success);
+            background: rgba(16,185,129,0.08);
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 8px;
+            margin-top: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79,70,229,0.35); }
+        .btn-primary:hover:not(:disabled) { background: #6366f1; }
+
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+
+        .btn-warning { background: var(--warning); color: #1a1a2e; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        .btn-warning:hover:not(:disabled) { background: #fbbf24; }
+
+        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.35); }
+        .btn-success:hover:not(:disabled) { background: #059669; }
+
+        /* REPORT OUTPUT */
+        .report-container {
+            background: var(--surface3);
+            padding: 28px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-header h2 { color: var(--text); font-size: 20px; margin-bottom: 4px; }
+        .report-header h3 { color: #818cf8; font-size: 16px; margin-bottom: 4px; }
+        .report-header h4 { color: var(--text-muted); font-size: 14px; font-weight: 400; }
+
+        .report-section { margin-bottom: 28px; }
+        .report-section h3 { color: #818cf8; margin-bottom: 14px; font-size: 15px; }
+        .report-section h4 { color: #67e8f9; margin-top: 18px; margin-bottom: 10px; font-size: 14px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+
+        th {
+            background: rgba(79,70,229,0.15);
+            color: #a5b4fc;
+            font-weight: 600;
+            padding: 11px 14px;
+            text-align: left;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(79,70,229,0.3);
+        }
+
+        td {
+            padding: 10px 14px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tr.total-row td {
+            font-weight: 700;
+            background: rgba(79,70,229,0.1);
+            color: #a5b4fc;
+        }
+
+        tr.paid-row td { background: rgba(16,185,129,0.06); }
+        tr.unpaid-row td { background: rgba(239,68,68,0.06); }
+        tr.highlight-row td { background: rgba(16,185,129,0.12); color: #6ee7b7; font-weight: 600; }
+        tr.balance-row td { background: rgba(6,182,212,0.1); color: #67e8f9; font-weight: 600; }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .loading-text {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* PAYMENT BOX */
+        .payment-box {
+            background: rgba(16,185,129,0.07);
+            border: 1px solid rgba(16,185,129,0.25);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 20px;
+        }
+
+        .payment-box h3 {
+            color: #6ee7b7;
+            font-size: 15px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payment-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .payment-input-row .form-group {
+            flex: 1;
+            min-width: 180px;
+            margin-bottom: 0;
+        }
+
+        .payment-input-row label {
+            color: #6ee7b7;
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 18px 20px; }
+            .header h1 { font-size: 17px; }
+            .tab { padding: 14px 14px; font-size: 12px; }
+            .content-wrapper { padding: 18px; }
+            .report-container { padding: 18px; }
+            .payment-input-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-logo">🎓</div>
+                <div class="header-title-group">
+                    <div class="subtitle-tag">SIPMINI</div>
+                    <h1>Admin Panel</h1>
+                </div>
+            </div>
+            <a href="index.html" class="back-btn">← ආපසු</a>
+        </div>
+
+        <div class="tabs-container">
+            <a href="er.html" class="tab">✏️ Edit Records</a>
+            <a href="ar.html" class="tab active">💰 Account Reports</a>
+            <a href="sr.html" class="tab">📊 Student Reports</a>
+            <a href="as.html" class="tab">⚙️ Access Setting</a>
+            <a href="ms.html" class="tab">🏫 Management System</a>
+        </div>
+
+        <div class="content-wrapper">
+            <h2 class="page-title">💰 ගිණුම් වාර්තා</h2>
+            <p class="page-subtitle">Financial Reports &amp; Teacher Payments</p>
+
+            <div id="connectionStatus" class="connection-status"></div>
+            <div id="alertBox" class="alert"></div>
+
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>දත්ත පූරණය වෙමින්... Connecting to database...</p>
+            </div>
+
+            <div id="mainContent" style="display: none;">
+                <div class="report-cards">
+                    <div class="report-card institute-card" onclick="generateInstituteReport()">
+                        <h3>🏢 Institute Summary</h3>
+                        <p>Complete overview of all income from ireport column</p>
+                        <div class="features">
+                            ✓ Total Institute Income<br>
+                            ✓ Teacher-wise Breakdown<br>
+                            ✓ Student Count<br>
+                            ✓ Detailed Analysis
+                        </div>
+                    </div>
+
+                    <div class="report-card teacher-card" onclick="showTeacherSelection()">
+                        <h3>👨‍🏫 Individual Teacher Report</h3>
+                        <p>Detailed payment report from treport column for a specific teacher</p>
+                        <div class="features">
+                            ✓ Teacher Payment Details<br>
+                            ✓ Number of Students<br>
+                            ✓ Total Amount from treport<br>
+                            ✓ Student-wise Breakdown
+                        </div>
+                    </div>
+                </div>
+
+                <div id="teacherSelectionBox" class="selection-box">
+                    <h3>👨‍🏫 Select Teacher for Individual Report</h3>
+                    <div class="form-group">
+                        <label>Teacher Name:</label>
+                        <select id="accountsTeacherSelect">
+                            <option value="">-- Select Teacher --</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateTeacherReport()">📊 Generate Teacher Report</button>
+                    <button class="btn btn-secondary" onclick="hideTeacherSelection()">✕ Cancel</button>
+                </div>
+
+                <div id="accountsReport"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
+
+        let supabaseClient;
+        let currentTeacherName = '';
+
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                return true;
+            } catch (error) {
+                showConnectionStatus('Failed to initialize Supabase: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        function showConnectionStatus(message, type = 'success') {
+            const el = document.getElementById('connectionStatus');
+            el.className = `connection-status status-${type}`;
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+
+        function showAlert(message, type = 'success') {
+            const el = document.getElementById('alertBox');
+            el.className = `alert alert-${type} show`;
+            el.textContent = message;
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loadingSpinner').classList.toggle('show', show);
+            document.getElementById('mainContent').style.display = show ? 'none' : 'block';
+        }
+
+        async function testConnection() {
+            try {
+                const { error } = await supabaseClient.from('sipminireport').select('*', { count: 'exact', head: true });
+                if (error) throw error;
+                return true;
+            } catch { return false; }
+        }
+
+        async function loadTeacherDropdown() {
+            try {
+                const { data, error } = await supabaseClient.from('sipminireport').select('teachername');
+                if (error) throw error;
+                const teachers = [...new Set(data.map(s => s.teachername))].filter(Boolean).sort();
+                const select = document.getElementById('accountsTeacherSelect');
+                select.innerHTML = '<option value="">-- Select Teacher --</option>' +
+                    teachers.map(t => `<option value="${t}">${t}</option>`).join('');
+            } catch (error) {
+                showAlert('Error loading teachers: ' + error.message, 'error');
+            }
+        }
+
+        function showTeacherSelection() {
+            document.getElementById('teacherSelectionBox').classList.add('show');
+            document.getElementById('accountsReport').innerHTML = '';
+        }
+
+        function hideTeacherSelection() {
+            document.getElementById('teacherSelectionBox').classList.remove('show');
+            document.getElementById('accountsTeacherSelect').value = '';
+        }
+
+        async function generateInstituteReport() {
+            hideTeacherSelection();
+            document.getElementById('accountsReport').innerHTML = '<div class="loading-text">⏳ Loading data...</div>';
+
+            try {
+                const { data: students, error } = await supabaseClient.from('sipminireport').select('*');
+                if (error) throw error;
+
+                let totalInstituteIncome = 0, totalStudents = 0, teacherBreakdown = {};
+
+                students.forEach(s => {
+                    const amt = parseFloat(s.ireport) || 0;
+                    if (amt > 0) {
+                        totalInstituteIncome += amt;
+                        totalStudents++;
+                        const t = s.teachername || 'Unknown';
+                        if (!teacherBreakdown[t]) teacherBreakdown[t] = { income: 0, students: 0, studentList: [] };
+                        teacherBreakdown[t].income += amt;
+                        teacherBreakdown[t].students++;
+                        teacherBreakdown[t].studentList.push({ name: s.studentname, subject: s.subject, amount: amt });
+                    }
+                });
+
+                document.getElementById('accountsReport').innerHTML = `
+                    <div class="report-container" id="accountsReportContent">
+                        <div class="report-header">
+                            <h2>🏢 Institute Financial Summary</h2>
+                            <h3>Income Report (from ireport column)</h3>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>💰 Overall Summary</h3>
+                            <table>
+                                <tr><th>Description</th><th>Value</th></tr>
+                                <tr><td>Total Students with Income</td><td>${totalStudents}</td></tr>
+                                <tr class="highlight-row"><td><strong>Total Institute Income</strong></td><td><strong>Rs. ${totalInstituteIncome.toFixed(2)}</strong></td></tr>
+                                <tr><td>Number of Teachers</td><td>${Object.keys(teacherBreakdown).length}</td></tr>
+                            </table>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>👨‍🏫 Teacher-wise Income Breakdown</h3>
+                            <table>
+                                <tr><th>Teacher Name</th><th>Students</th><th>Total Income</th></tr>
+                                ${Object.entries(teacherBreakdown).sort((a,b)=>b[1].income-a[1].income)
+                                    .map(([n,d]) => `<tr><td>${n}</td><td>${d.students}</td><td>Rs. ${d.income.toFixed(2)}</td></tr>`).join('')}
+                                <tr class="total-row"><td>Total</td><td>${totalStudents}</td><td>Rs. ${totalInstituteIncome.toFixed(2)}</td></tr>
+                            </table>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>📋 Detailed Student-wise Breakdown</h3>
+                            ${Object.entries(teacherBreakdown).sort((a,b)=>b[1].income-a[1].income).map(([tn,d]) => `
+                                <h4>👨‍🏫 ${tn}</h4>
+                                <table>
+                                    <tr><th>Student Name</th><th>Subject</th><th>Income Amount</th></tr>
+                                    ${d.studentList.map(s=>`<tr><td>${s.name}</td><td>${s.subject}</td><td>Rs. ${s.amount.toFixed(2)}</td></tr>`).join('')}
+                                    <tr class="total-row"><td colspan="2">Subtotal for ${tn}</td><td>Rs. ${d.income.toFixed(2)}</td></tr>
+                                </table>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-primary" onclick="copyToWhatsApp('accountsReportContent')">📋 Copy to WhatsApp</button>
+                        <button class="btn btn-warning" onclick="savePDF('accountsReportContent', 'Institute_Income_Report')">📄 Save PDF</button>
+                    </div>`;
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+                document.getElementById('accountsReport').innerHTML = `<div style="background:rgba(239,68,68,0.1);padding:20px;border-radius:10px;border:1px solid rgba(239,68,68,0.2);"><h3 style="color:#fca5a5;">❌ Error Loading Data</h3><p style="color:#94a3b8;margin-top:8px;">${error.message}</p></div>`;
+            }
+        }
+
+        async function generateTeacherReport() {
+            const selectedTeacher = document.getElementById('accountsTeacherSelect').value;
+            if (!selectedTeacher) { showAlert('Please select a teacher', 'error'); return; }
+
+            currentTeacherName = selectedTeacher;
+            document.getElementById('accountsReport').innerHTML = '<div class="loading-text">⏳ Loading data...</div>';
+
+            try {
+                const { data: students, error } = await supabaseClient.from('sipminireport').select('*').eq('teachername', selectedTeacher);
+                if (error) throw error;
+
+                // Load existing balance from teachers_balance (first matching row)
+                let existingBalance = 0;
+                const { data: balanceData, error: balanceError } = await supabaseClient
+                    .from('sipminireport')
+                    .select('teachers_balance')
+                    .eq('teachername', selectedTeacher)
+                    .limit(1);
+                if (!balanceError && balanceData && balanceData.length > 0) {
+                    existingBalance = parseFloat(balanceData[0].teachers_balance) || 0;
+                }
+
+                let totalPayment = 0, studentsWithPayment = 0, studentsWithoutPayment = 0, studentDetails = [];
+
+                students.forEach(s => {
+                    const amt = parseFloat(s.treport) || 0;
+                    if (amt > 0) {
+                        totalPayment += amt;
+                        studentsWithPayment++;
+                        studentDetails.push({ student: s.studentname, subject: s.subject, monthlyFee: parseFloat(s.monthly_fee)||0, payment: amt, hasPaid: true });
+                    } else {
+                        studentsWithoutPayment++;
+                        studentDetails.push({ student: s.studentname, subject: s.subject, monthlyFee: parseFloat(s.monthly_fee)||0, payment: 0, hasPaid: false });
+                    }
+                });
+
+                const remaining = totalPayment - existingBalance;
+
+                document.getElementById('accountsReport').innerHTML = `
+                    <div class="report-container" id="accountsReportContent">
+                        <div class="report-header">
+                            <h2>👨‍🏫 Teacher Payment Report</h2>
+                            <h3>${selectedTeacher}</h3>
+                            <h4>Payment Details (from treport column)</h4>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>📊 Summary</h3>
+                            <table>
+                                <tr><th>Description</th><th>Value</th></tr>
+                                <tr><td>Total Students Assigned</td><td>${students.length}</td></tr>
+                                <tr><td>Students with Payment</td><td>${studentsWithPayment}</td></tr>
+                                <tr><td>Students without Payment</td><td>${studentsWithoutPayment}</td></tr>
+                                <tr class="highlight-row"><td><strong>💰 Total Payment Amount (treport)</strong></td><td><strong>Rs. ${totalPayment.toFixed(2)}</strong></td></tr>
+                                <tr class="balance-row"><td><strong>💵 Paid to Teacher (teachers_balance)</strong></td><td><strong>Rs. ${existingBalance.toFixed(2)}</strong></td></tr>
+                                <tr class="${remaining > 0 ? 'unpaid-row' : remaining < 0 ? 'paid-row' : 'total-row'}">
+                                    <td><strong>${remaining > 0 ? '⚠️ ගෙවීමට ඉතිරි මුදල' : remaining < 0 ? '✅ අතිරේකව ගෙවූ මුදල' : '✅ සම්පූර්ණයෙන් ගෙවා ඇත'}</strong></td>
+                                    <td><strong>Rs. ${Math.abs(remaining).toFixed(2)}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>📋 Student-wise Payment Details</h3>
+                            <table>
+                                <tr><th>Student</th><th>Subject</th><th>Monthly Fee</th><th>Status</th><th>Payment</th></tr>
+                                ${studentDetails.map(c => `
+                                    <tr class="${c.hasPaid ? 'paid-row' : 'unpaid-row'}">
+                                        <td>${c.student}</td>
+                                        <td>${c.subject}</td>
+                                        <td>Rs. ${c.monthlyFee.toFixed(2)}</td>
+                                        <td>${c.hasPaid ? '✓ Paid' : '✗ Not Paid'}</td>
+                                        <td>Rs. ${c.payment.toFixed(2)}</td>
+                                    </tr>`).join('')}
+                                <tr class="total-row"><td colspan="4">Total Payment</td><td>Rs. ${totalPayment.toFixed(2)}</td></tr>
+                                <tr class="balance-row"><td colspan="4">💵 Paid to Teacher</td><td>Rs. ${existingBalance.toFixed(2)}</td></tr>
+                                <tr class="${remaining > 0 ? 'unpaid-row' : remaining < 0 ? 'paid-row' : 'total-row'}">
+                                    <td colspan="4"><strong>${remaining > 0 ? '⚠️ ගෙවීමට ඉතිරි මුදල' : remaining < 0 ? '✅ අතිරේකව ගෙවූ මුදල' : '✅ සම්පූර්ණයෙන් ගෙවා ඇත'}</strong></td>
+                                    <td><strong>Rs. ${Math.abs(remaining).toFixed(2)}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="payment-box">
+                        <h3>💵 ගුරුවරයාට ගෙවීම සටහන් කරන්න | Record Payment to Teacher</h3>
+                        <div class="payment-input-row">
+                            <div class="form-group">
+                                <label>ගෙවූ මුදල (Rs.) | Payment Amount:</label>
+                                <input type="number" id="teacherPaymentAmount" placeholder="e.g. 15000" min="0" step="0.01" />
+                            </div>
+                            <div>
+                                <button class="btn btn-success" onclick="recordTeacherPayment('${selectedTeacher.replace(/'/g,"\\'")}', ${totalPayment})">
+                                    ✅ ගෙවීම සුරකින්න | Save Payment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-actions">
+                        <button class="btn btn-primary" onclick="copyToWhatsApp('accountsReportContent')">📋 Copy to WhatsApp</button>
+                        <button class="btn btn-warning" onclick="savePDF('accountsReportContent', 'Teacher_${selectedTeacher.replace(/\s+/g,'_')}_Report')">📄 Save PDF</button>
+                        <button class="btn btn-secondary" onclick="hideTeacherSelection()">← Back</button>
+                    </div>`;
+                hideTeacherSelection();
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+                document.getElementById('accountsReport').innerHTML = `<div style="background:rgba(239,68,68,0.1);padding:20px;border-radius:10px;"><h3 style="color:#fca5a5;">❌ Error Loading Data</h3><p style="color:#94a3b8;margin-top:8px;">${error.message}</p></div>`;
+            }
+        }
+
+        async function recordTeacherPayment(teacherName, totalPayment) {
+            const amountInput = document.getElementById('teacherPaymentAmount');
+            const amount = parseFloat(amountInput.value);
+
+            if (!amount || amount <= 0) {
+                showAlert('කරුණාකර වලංගු මුදලක් ඇතුළු කරන්න | Please enter a valid amount', 'error');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ Saving...';
+
+            try {
+                // Update teachers_balance for ALL rows of this teacher
+                const { error } = await supabaseClient
+                    .from('sipminireport')
+                    .update({ teachers_balance: amount })
+                    .eq('teachername', teacherName);
+
+                if (error) throw error;
+
+                showAlert(`✅ Rs. ${amount.toFixed(2)} - ${teacherName} ගේ ගෙවීම සාර්ථකව සුරකින ලදී! | Payment saved successfully!`, 'success');
+
+                // Refresh the report to reflect new balance
+                document.getElementById('accountsTeacherSelect').value = teacherName;
+                await generateTeacherReport();
+
+            } catch (error) {
+                showAlert('❌ Error saving payment: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = '✅ ගෙවීම සුරකින්න | Save Payment';
+            }
+        }
+
+        function copyToWhatsApp(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) { showAlert('Report not found', 'error'); return; }
+
+            let text = element.querySelector('.report-header').innerText + '\n\n';
+            element.querySelectorAll('table').forEach(table => {
+                const section = table.closest('.report-section');
+                if (section) {
+                    const heading = section.querySelector('h3, h4');
+                    if (heading) text += heading.innerText + '\n';
+                }
+                table.querySelectorAll('tr').forEach(row => {
+                    text += Array.from(row.querySelectorAll('th,td')).map(c => c.innerText).join(' | ') + '\n';
+                });
+                text += '\n';
+            });
+
+            navigator.clipboard.writeText(text)
+                .then(() => showAlert('✓ Copied to clipboard! Ready to paste in WhatsApp', 'success'))
+                .catch(() => showAlert('Failed to copy. Please try again.', 'error'));
+        }
+
+        function savePDF(elementId, filename) {
+            const element = document.getElementById(elementId);
+            if (!element) { showAlert('Report not found', 'error'); return; }
+
+            html2pdf().set({
+                margin: [10,10,10,10],
+                filename: filename + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element.cloneNode(true)).save()
+                .then(() => showAlert('✓ PDF saved successfully!', 'success'))
+                .catch(() => showAlert('Error generating PDF.', 'error'));
+        }
+
+        window.addEventListener('DOMContentLoaded', async function () {
+            if (!initSupabase()) { showLoading(false); return; }
+            const ok = await testConnection();
+            if (!ok) {
+                showConnectionStatus('❌ Cannot connect to database.', 'error');
+                showLoading(false);
+                return;
+            }
+            showConnectionStatus('✅ Connected successfully!', 'success');
+            await loadTeacherDropdown();
+            showLoading(false);
+        });
+    </script>
+</body>
+</html>
