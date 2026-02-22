@@ -61,7 +61,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* HEADER */
         .header {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
             color: white;
@@ -115,7 +114,6 @@
 
         .back-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); }
 
-        /* TABS */
         .tabs-container {
             display: flex;
             background: var(--surface2);
@@ -147,7 +145,6 @@
             background: rgba(251,191,36,0.06);
         }
 
-        /* CONTENT */
         .content-wrapper { padding: 30px; }
 
         .page-header {
@@ -160,7 +157,6 @@
         .page-header h2 { color: var(--text); font-size: 22px; font-weight: 700; margin-bottom: 6px; }
         .page-header p { color: var(--text-muted); font-size: 14px; font-family: 'Noto Sans Sinhala', sans-serif; }
 
-        /* STATUS & ALERTS */
         .connection-status {
             padding: 10px 15px;
             border-radius: 8px;
@@ -180,7 +176,6 @@
         .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
         .alert-info { background: rgba(6,182,212,0.1); color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
 
-        /* SPINNER */
         .loading-spinner { display: none; text-align: center; padding: 50px; color: var(--text-muted); }
         .loading-spinner.show { display: block; }
         .spinner {
@@ -193,7 +188,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* TWO COLUMN LAYOUT */
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -205,7 +199,6 @@
             .main-grid { grid-template-columns: 1fr; }
         }
 
-        /* CARDS */
         .card {
             background: var(--surface3);
             border: 1px solid var(--border);
@@ -227,7 +220,6 @@
         .card-title.rose { color: #fb7185; }
         .card-title.green { color: #34d399; }
 
-        /* FORM */
         .form-group { margin-bottom: 16px; }
 
         label {
@@ -264,7 +256,6 @@
 
         .helper-text { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
 
-        /* PASSWORD DISPLAY */
         .password-result {
             background: rgba(16,185,129,0.08);
             border: 1px solid rgba(16,185,129,0.2);
@@ -303,7 +294,6 @@
 
         .copy-btn:hover { background: rgba(16,185,129,0.25); }
 
-        /* BUTTONS */
         .btn {
             padding: 11px 20px;
             border: none;
@@ -339,7 +329,6 @@
 
         .btn-sm { padding: 7px 12px; font-size: 12px; }
 
-        /* CREDENTIALS TABLE */
         .table-section {
             background: var(--surface3);
             border: 1px solid var(--border);
@@ -407,7 +396,6 @@
 
         .empty-state p { font-size: 14px; margin-top: 8px; }
 
-        /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -440,7 +428,6 @@
 
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 
-        /* WARNING BOX */
         .warning-box {
             background: rgba(245,158,11,0.08);
             border: 1px solid rgba(245,158,11,0.25);
@@ -483,6 +470,7 @@
             <a href="sr.html" class="tab">📊 Student Reports</a>
             <a href="as.html" class="tab active">⚙️ Access Setting</a>
             <a href="ms.html" class="tab">🏫 Management System</a>
+            <a href="srp.html" class="tab">📝 Student Register</a>
         </div>
 
         <div class="content-wrapper">
@@ -505,7 +493,6 @@
 
             <div id="mainContent" style="display:none;">
 
-                <!-- TOP GRID: Create + Change Password -->
                 <div class="main-grid">
 
                     <!-- CREATE NEW CREDENTIAL -->
@@ -688,7 +675,6 @@
         let allCredentials = [];
         let pendingDeleteId = null;
 
-        /* ===== INIT ===== */
         function initSupabase() {
             try {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -718,7 +704,6 @@
             document.getElementById('mainContent').style.display = show ? 'none' : 'block';
         }
 
-        /* ===== HASH ===== */
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -727,14 +712,12 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        /* ===== FORMAT DATE ===== */
         function formatDate(dateStr) {
             if (!dateStr) return '—';
             const d = new Date(dateStr);
             return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        /* ===== LOAD CREDENTIALS ===== */
         async function loadCredentials() {
             try {
                 const { data, error } = await supabaseClient
@@ -787,7 +770,6 @@
             document.getElementById('toggleActiveSelect').innerHTML = options;
         }
 
-        /* ===== CREATE CREDENTIAL ===== */
         async function createCredential() {
             const teachername = document.getElementById('newTeacherName').value.trim();
             const access_code = document.getElementById('newAccessCode').value.trim().toLowerCase();
@@ -802,34 +784,17 @@
 
             try {
                 const password_hash = await hashPassword(password);
+                const insertData = { teachername, access_code, password_hash, is_active, created_at: new Date().toISOString() };
+                if (expiry_days && parseInt(expiry_days) > 0) insertData.expiry_days = expiry_days;
 
-                const insertData = {
-                    teachername,
-                    access_code,
-                    password_hash,
-                    is_active,
-                    created_at: new Date().toISOString()
-                };
-
-                if (expiry_days && parseInt(expiry_days) > 0) {
-                    insertData.expiry_days = expiry_days;
-                }
-
-                const { data, error } = await supabaseClient
-                    .from('credentials_sipmini')
-                    .insert([insertData])
-                    .select();
-
+                const { data, error } = await supabaseClient.from('credentials_sipmini').insert([insertData]).select();
                 if (error) throw error;
 
                 showAlert(`✅ Credential සාර්ථකව සාදන ලදි! (${teachername})`, 'success');
-
-                // Show result
                 document.getElementById('createdCode').textContent = access_code;
                 document.getElementById('createdPassword').textContent = password;
                 document.getElementById('createResult').classList.add('show');
 
-                // Clear form
                 document.getElementById('newTeacherName').value = '';
                 document.getElementById('newAccessCode').value = '';
                 document.getElementById('newPassword').value = '';
@@ -849,7 +814,6 @@
                 .catch(() => showAlert('Copy failed', 'error'));
         }
 
-        /* ===== CHANGE PASSWORD ===== */
         async function changePassword() {
             const id = document.getElementById('changePwSelect').value;
             const newPw = document.getElementById('newPw').value.trim();
@@ -860,13 +824,8 @@
 
             try {
                 const password_hash = await hashPassword(newPw);
-                const { error } = await supabaseClient
-                    .from('credentials_sipmini')
-                    .update({ password_hash })
-                    .eq('id', parseInt(id));
-
+                const { error } = await supabaseClient.from('credentials_sipmini').update({ password_hash }).eq('id', parseInt(id));
                 if (error) throw error;
-
                 showAlert('✅ Password සාර්ථකව update කරන ලදි!', 'success');
                 document.getElementById('newPw').value = '';
                 await loadCredentials();
@@ -875,19 +834,12 @@
             }
         }
 
-        /* ===== TOGGLE ACTIVE ===== */
         async function setActive(activeState) {
             const id = document.getElementById('toggleActiveSelect').value;
             if (!id) { showAlert('Credential තෝරන්න', 'error'); return; }
-
             try {
-                const { error } = await supabaseClient
-                    .from('credentials_sipmini')
-                    .update({ is_active: activeState })
-                    .eq('id', parseInt(id));
-
+                const { error } = await supabaseClient.from('credentials_sipmini').update({ is_active: activeState }).eq('id', parseInt(id));
                 if (error) throw error;
-
                 showAlert(`✅ Credential ${activeState ? 'activate' : 'deactivate'} කරන ලදි!`, 'success');
                 await loadCredentials();
             } catch (e) {
@@ -895,7 +847,6 @@
             }
         }
 
-        /* ===== DELETE ===== */
         function openDeleteModal(id, name) {
             pendingDeleteId = id;
             document.getElementById('deleteModalMsg').textContent = `"${name}" — ID: ${id}`;
@@ -910,13 +861,8 @@
         async function confirmDelete() {
             if (!pendingDeleteId) return;
             try {
-                const { error } = await supabaseClient
-                    .from('credentials_sipmini')
-                    .delete()
-                    .eq('id', pendingDeleteId);
-
+                const { error } = await supabaseClient.from('credentials_sipmini').delete().eq('id', pendingDeleteId);
                 if (error) throw error;
-
                 showAlert('✅ Credential සාර්ථකව මකා දමන ලදි!', 'success');
                 closeDeleteModal();
                 await loadCredentials();
@@ -926,7 +872,6 @@
             }
         }
 
-        /* ===== EDIT ===== */
         function openEditModal(id) {
             const cred = allCredentials.find(c => c.id === id);
             if (!cred) return;
@@ -950,14 +895,8 @@
             try {
                 const updateData = { teachername, access_code };
                 if (expiry_days) updateData.expiry_days = expiry_days;
-
-                const { error } = await supabaseClient
-                    .from('credentials_sipmini')
-                    .update(updateData)
-                    .eq('id', id);
-
+                const { error } = await supabaseClient.from('credentials_sipmini').update(updateData).eq('id', id);
                 if (error) throw error;
-
                 showAlert('✅ Credential සාර්ථකව update කරන ලදි!', 'success');
                 closeEditModal();
                 await loadCredentials();
@@ -966,22 +905,13 @@
             }
         }
 
-        /* ===== MODAL OUTSIDE CLICK ===== */
-        document.getElementById('deleteModal').addEventListener('click', function(e) {
-            if (e.target === this) closeDeleteModal();
-        });
+        document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+        document.getElementById('editModal').addEventListener('click', function(e) { if (e.target === this) closeEditModal(); });
 
-        document.getElementById('editModal').addEventListener('click', function(e) {
-            if (e.target === this) closeEditModal();
-        });
-
-        /* ===== INIT ===== */
         window.addEventListener('DOMContentLoaded', async function () {
             if (!initSupabase()) { showLoading(false); return; }
             try {
-                const { error } = await supabaseClient
-                    .from('credentials_sipmini')
-                    .select('*', { count: 'exact', head: true });
+                const { error } = await supabaseClient.from('credentials_sipmini').select('*', { count: 'exact', head: true });
                 if (error) throw error;
             } catch (e) {
                 showConnectionStatus('❌ Cannot connect to database.', 'error');
