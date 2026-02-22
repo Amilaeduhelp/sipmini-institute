@@ -113,10 +113,7 @@
             flex-shrink: 0;
         }
 
-        .back-btn:hover {
-            background: rgba(255,255,255,0.25);
-            border-color: rgba(255,255,255,0.5);
-        }
+        .back-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); }
 
         .tabs-container {
             display: flex;
@@ -141,10 +138,7 @@
             border-bottom: 3px solid transparent;
         }
 
-        .tab:hover {
-            color: var(--text);
-            background: rgba(255,255,255,0.04);
-        }
+        .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 
         .tab.active {
             color: #818cf8;
@@ -294,6 +288,7 @@
         .btn-info { background: rgba(8,145,178,0.2); color: #67e8f9; border: 1px solid rgba(6,182,212,0.25); }
         .btn-info:hover:not(:disabled) { background: rgba(8,145,178,0.35); }
 
+        /* STUDENT CARDS */
         .student-card {
             background: var(--surface3);
             border: 1px solid var(--border);
@@ -305,7 +300,6 @@
         }
 
         .student-card:hover { border-color: var(--accent); }
-
         .student-card h3 { color: var(--text); font-size: 15px; margin-bottom: 6px; }
         .student-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 3px; }
         .student-card p strong { color: var(--text); }
@@ -318,6 +312,19 @@
             margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid var(--border);
+        }
+
+        .class-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(129,140,248,0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(129,140,248,0.25);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+            margin-top: 2px;
         }
 
         .results-title { color: #818cf8; margin-bottom: 16px; font-size: 15px; font-weight: 600; }
@@ -342,6 +349,7 @@
         .error-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 6px; }
         .error-box ul { color: var(--text-muted); font-size: 13px; margin-left: 20px; line-height: 1.8; }
 
+        /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -375,6 +383,102 @@
 
         .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
 
+        /* CLASS TYPE CHECKBOXES IN MODAL */
+        .class-type-edit-section { margin-bottom: 16px; }
+        .class-type-edit-label {
+            display: block;
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+        }
+
+        .class-type-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+        }
+
+        .class-type-edit-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .class-type-edit-item:has(.edit-class-checkbox:checked) {
+            border-color: rgba(129,140,248,0.5);
+            background: rgba(129,140,248,0.07);
+        }
+
+        .edit-checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .edit-class-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #818cf8;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .edit-class-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .edit-fee-row {
+            display: none;
+            padding: 0 12px 10px 12px;
+        }
+
+        .edit-fee-row.visible { display: block; }
+
+        .edit-fee-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .edit-fee-input {
+            width: 100%;
+            padding: 7px 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(129,140,248,0.3);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .edit-fee-input:focus {
+            border-color: #818cf8;
+            background: rgba(129,140,248,0.1);
+        }
+
+        .edit-fee-input::placeholder { color: rgba(148,163,184,0.4); font-size: 12px; }
+
+        .total-fee-display {
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6ee7b7;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .header { padding: 18px 20px; }
             .header h1 { font-size: 17px; }
@@ -382,6 +486,7 @@
             .content-wrapper { padding: 18px; }
             .modal-actions { grid-template-columns: 1fr; }
             .card-actions .btn { padding: 8px 12px; font-size: 12px; }
+            .class-type-edit-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -495,10 +600,95 @@
                     <label>Phone Number</label>
                     <input type="text" id="editPhoneNo">
                 </div>
-                <div class="form-group">
-                    <label>Monthly Fee *</label>
-                    <input type="number" id="editMonthlyFee" required>
+
+                <!-- CLASS TYPE CHECKBOXES -->
+                <div class="class-type-edit-section">
+                    <span class="class-type-edit-label">පන්ති වර්ගය — Class Type (ටික් කළ ඒවා)</span>
+                    <div class="class-type-edit-grid">
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Theory" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Theory</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Theory">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Theory" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Revision" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Revision</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Revision">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Revision" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Paper class" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Paper class</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Paper class">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Paper class" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Grammar class" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Grammar class</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Grammar class">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Grammar class" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Spoken class" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Spoken class</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Spoken class">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Spoken class" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Practical" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Practical</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Practical">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Practical" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                        <div class="class-type-edit-item">
+                            <label class="edit-checkbox-row">
+                                <input type="checkbox" class="edit-class-checkbox" value="Extra class" onchange="updateEditTotalFee()">
+                                <span class="edit-class-name">Extra class</span>
+                            </label>
+                            <div class="edit-fee-row" id="editfee-Extra class">
+                                <span class="edit-fee-label">Fee (Rs.)</span>
+                                <input type="number" class="edit-fee-input" id="editfeeamt-Extra class" placeholder="0 = FREE" min="0" step="0.01" oninput="updateEditTotalFee()">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="total-fee-display" id="editTotalFeeDisplay">
+                        💰 මාසික මුළු ගාස්තුව / Total Monthly Fee: Rs. 0.00
+                    </div>
                 </div>
+
             </div>
             <div class="modal-actions">
                 <button class="btn btn-primary" onclick="saveEditedRecord()">💾 Save Changes</button>
@@ -510,6 +700,8 @@
     <script>
         const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
+
+        const CLASS_TYPES = ['Theory', 'Revision', 'Paper class', 'Grammar class', 'Spoken class', 'Practical', 'Extra class'];
 
         let allRecords = [];
         let supabaseClient;
@@ -611,7 +803,8 @@
                 (r.studentno && r.studentno.toLowerCase().includes(term)) ||
                 (r.studentname && r.studentname.toLowerCase().includes(term)) ||
                 (r.teachername && r.teachername.toLowerCase().includes(term)) ||
-                (r.subject && r.subject.toLowerCase().includes(term))
+                (r.subject && r.subject.toLowerCase().includes(term)) ||
+                (r.class_type && r.class_type.toLowerCase().includes(term))
             );
             displaySearchResults(filtered, `Search Results for "${term}"`);
         }
@@ -652,13 +845,20 @@
 
             el.innerHTML = `
                 <div class="results-title">${title} (${records.length} records)</div>
-                ${records.map(r => `
+                ${records.map(r => {
+                    // Build class type badges
+                    const classTypeBadges = r.class_type
+                        ? r.class_type.split('/').map(t => t.trim()).filter(Boolean)
+                            .map(t => `<span class="class-type-badge">${t}</span>`).join('')
+                        : '<span style="color:var(--text-muted);font-size:12px;">—</span>';
+                    return `
                     <div class="student-card">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
                             <div>
                                 <h3>${r.studentname || 'N/A'} <span style="color:var(--text-muted);font-weight:400;">(${r.studentno || 'N/A'})</span></h3>
                                 <p><strong>Subject:</strong> ${r.subject || 'N/A'} &nbsp;|&nbsp; <strong>Teacher:</strong> ${r.teachername || 'N/A'}</p>
                                 <p><strong>Phone:</strong> ${r.phoneno || 'N/A'} &nbsp;|&nbsp; <strong>Monthly Fee:</strong> Rs. ${r.monthly_fee || 0}</p>
+                                <div style="margin-top:6px;">${classTypeBadges}</div>
                             </div>
                             <div class="card-actions">
                                 <button class="btn btn-info" onclick="editRecord(${r.id})">✏️ Edit</button>
@@ -669,20 +869,77 @@
                             <strong>Attendance:</strong> ${r.sreport ? r.sreport.split(',').length : 0} days &nbsp;|&nbsp;
                             <strong>Payments:</strong> ${r.payment ? r.payment.split(',').length : 0} months
                         </div>
-                    </div>
-                `).join('')}`;
+                    </div>`; 
+                }).join('')}`;
+        }
+
+        // Toggle fee input visibility in edit modal
+        function updateEditTotalFee() {
+            CLASS_TYPES.forEach(type => {
+                const cb = document.querySelector(`.edit-class-checkbox[value="${type}"]`);
+                const feeRow = document.getElementById('editfee-' + type);
+                if (cb && feeRow) {
+                    if (cb.checked) {
+                        feeRow.classList.add('visible');
+                    } else {
+                        feeRow.classList.remove('visible');
+                    }
+                }
+            });
+
+            // Update total fee display
+            let total = 0;
+            document.querySelectorAll('.edit-class-checkbox:checked').forEach(cb => {
+                const feeInput = document.getElementById('editfeeamt-' + cb.value);
+                total += parseFloat(feeInput ? feeInput.value : 0) || 0;
+            });
+            document.getElementById('editTotalFeeDisplay').textContent =
+                `💰 මාසික මුළු ගාස්තුව / Total Monthly Fee: Rs. ${total.toFixed(2)}`;
         }
 
         function editRecord(id) {
             const record = allRecords.find(r => r.id === id);
             if (!record) { showAlert('Record not found', 'error'); return; }
+
             document.getElementById('editRecordId').value = record.id;
             document.getElementById('editStudentNo').value = record.studentno || '';
             document.getElementById('editStudentName').value = record.studentname || '';
             document.getElementById('editTeacherName').value = record.teachername || '';
             document.getElementById('editSubject').value = record.subject || '';
             document.getElementById('editPhoneNo').value = record.phoneno || '';
-            document.getElementById('editMonthlyFee').value = record.monthly_fee || 0;
+
+            // Reset all checkboxes and fee inputs
+            CLASS_TYPES.forEach(type => {
+                const cb = document.querySelector(`.edit-class-checkbox[value="${type}"]`);
+                const feeRow = document.getElementById('editfee-' + type);
+                const feeInput = document.getElementById('editfeeamt-' + type);
+                if (cb) cb.checked = false;
+                if (feeRow) feeRow.classList.remove('visible');
+                if (feeInput) feeInput.value = '';
+            });
+
+            // Parse existing class_type and set checkboxes
+            // class_type format: "Theory/Revision" etc.
+            // monthly_fee is the total; we can't split per-type easily from old data
+            // So: if class_type exists, check those boxes and put total fee in first checked box
+            if (record.class_type) {
+                const types = record.class_type.split('/').map(t => t.trim()).filter(Boolean);
+                const feePerType = types.length > 0 ? (parseFloat(record.monthly_fee) || 0) / types.length : 0;
+                types.forEach((type, idx) => {
+                    const cb = document.querySelector(`.edit-class-checkbox[value="${type}"]`);
+                    const feeRow = document.getElementById('editfee-' + type);
+                    const feeInput = document.getElementById('editfeeamt-' + type);
+                    if (cb) cb.checked = true;
+                    if (feeRow) feeRow.classList.add('visible');
+                    // Put fee in first type only, rest 0 (user can adjust)
+                    if (feeInput) feeInput.value = idx === 0 ? (parseFloat(record.monthly_fee) || 0) : 0;
+                });
+            } else {
+                // Old record without class_type — no checkbox pre-selected
+                // Monthly fee shown in total display
+            }
+
+            updateEditTotalFee();
             document.getElementById('editRecordModal').classList.add('show');
         }
 
@@ -690,13 +947,28 @@
 
         async function saveEditedRecord() {
             const id = parseInt(document.getElementById('editRecordId').value);
+
+            // Collect selected class types and fees
+            const selectedTypes = [];
+            let totalFee = 0;
+            CLASS_TYPES.forEach(type => {
+                const cb = document.querySelector(`.edit-class-checkbox[value="${type}"]`);
+                if (cb && cb.checked) {
+                    const feeInput = document.getElementById('editfeeamt-' + type);
+                    const fee = parseFloat(feeInput ? feeInput.value : 0) || 0;
+                    selectedTypes.push(type);
+                    totalFee += fee;
+                }
+            });
+
             const updatedData = {
                 studentno: document.getElementById('editStudentNo').value.trim().toLowerCase(),
                 studentname: document.getElementById('editStudentName').value.trim(),
                 teachername: document.getElementById('editTeacherName').value.trim(),
                 subject: document.getElementById('editSubject').value.trim(),
                 phoneno: document.getElementById('editPhoneNo').value.trim(),
-                monthly_fee: parseFloat(document.getElementById('editMonthlyFee').value) || 0
+                class_type: selectedTypes.length > 0 ? selectedTypes.join('/') : null,
+                monthly_fee: totalFee
             };
 
             if (!updatedData.studentno.match(/^s\d{4}$/)) {
