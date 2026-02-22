@@ -531,8 +531,10 @@
 
                     <div class="form-group">
                         <label>ශිෂ්‍ය අංකය හෝ නම ටයිප් කරන්න:</label>
-                        <input type="text" id="studentSearchInput" placeholder="උදා: s0001 හෝ ශිෂ්‍ය නම...">
-                        <div class="helper-text">Type student number (s0001) or student name to search</div>
+                        <input type="text" id="studentSearchInput" placeholder="උදා: 12 හෝ s0012 හෝ ශිෂ්‍ය නම...">
+                        <div class="helper-text">
+                            අංකය ඕනෑ ම ආකාරයකින් ටයිප් කරන්න: <strong>12</strong>, <strong>0012</strong>, <strong>s12</strong>, <strong>s0012</strong> — සියල්ල හොඳින් සොයාගනී
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -558,6 +560,24 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
 
         let supabaseClient;
+
+        // ── Normalize any student number input to canonical s0012 format ──
+        // Handles: "12", "012", "0012", "s12", "s012", "s0012", "S0012" etc.
+        function normalizeStudentNo(input) {
+            const cleaned = input.trim().toLowerCase().replace(/^s+/, '').replace(/^0+/, '') || '0';
+            return 's' + cleaned.padStart(4, '0');
+        }
+
+        // ── Check if a search term matches a student number (flexible) ──
+        function studentNoMatches(studentNo, searchTerm) {
+            // Normalize both sides and compare
+            try {
+                const normalizedSearch = normalizeStudentNo(searchTerm);
+                return studentNo.toLowerCase() === normalizedSearch;
+            } catch {
+                return false;
+            }
+        }
 
         function initSupabase() {
             try {
@@ -648,26 +668,36 @@
             const searchInput = document.getElementById('studentSearchInput');
             const select = document.getElementById('studentSelect');
 
-            const allOptions = '<option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>' +
-                Object.entries(uniqueStudents)
-                    .sort((a, b) => a[1].localeCompare(b[1]))
-                    .map(([no, name]) => `<option value="${no}">${name} (${no})</option>`)
-                    .join('');
+            const buildOptions = (entries) =>
+                '<option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>' +
+                entries.map(([no, name]) => `<option value="${no}">${name} (${no})</option>`).join('');
+
+            const allEntries = Object.entries(uniqueStudents).sort((a, b) => a[1].localeCompare(b[1]));
+            const allOptions = buildOptions(allEntries);
 
             searchInput.addEventListener('input', function () {
-                const term = this.value.toLowerCase().trim();
+                const term = this.value.trim();
                 if (!term) { select.innerHTML = allOptions; return; }
 
-                const filtered = Object.entries(uniqueStudents).filter(([no, name]) =>
-                    no.toLowerCase().includes(term) || name.toLowerCase().includes(term)
-                );
+                const termLower = term.toLowerCase();
+
+                const filtered = allEntries.filter(([no, name]) => {
+                    // Name match
+                    if (name.toLowerCase().includes(termLower)) return true;
+                    // Flexible student number match:
+                    // Check if term looks like a number (with optional s prefix / leading zeros)
+                    if (/^s?\d+$/i.test(term)) {
+                        return studentNoMatches(no, term);
+                    }
+                    return false;
+                });
 
                 if (filtered.length > 0) {
-                    select.innerHTML = '<option value="">-- ශිෂ්‍යයෙකු තෝරන්න / Select Student --</option>' +
-                        filtered.map(([no, name]) => `<option value="${no}">${name} (${no})</option>`).join('');
+                    select.innerHTML = buildOptions(filtered);
+                    // Auto-select if exactly one result
                     if (filtered.length === 1) select.value = filtered[0][0];
                 } else {
-                    select.innerHTML = '<option value="">No students found</option>';
+                    select.innerHTML = '<option value="">ශිෂ්‍යයෙකු හමු නොවිණි / No students found</option>';
                 }
             });
 
@@ -677,8 +707,20 @@
         }
 
         async function generateReport() {
-            const studentNo = document.getElementById('studentSelect').value;
-            if (!studentNo) { showAlert('කරුණාකර ශිෂ්‍යයෙකු තෝරන්න / Please select a student', 'error'); return; }
+            let studentNo = document.getElementById('studentSelect').value;
+
+            // If dropdown not selected but search input has a number, try to resolve it
+            if (!studentNo) {
+                const searchTerm = document.getElementById('studentSearchInput').value.trim();
+                if (searchTerm && /^s?\d+$/i.test(searchTerm)) {
+                    studentNo = normalizeStudentNo(searchTerm);
+                }
+            }
+
+            if (!studentNo) {
+                showAlert('කරුණාකර ශිෂ්‍යයෙකු තෝරන්න / Please select a student', 'error');
+                return;
+            }
 
             const rc = document.getElementById('reportContainer');
             rc.style.display = 'block';
