@@ -479,6 +479,51 @@
             font-size: 13px;
         }
 
+        /* ATTENDANCE BUTTON */
+        .btn-attendance {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 18px rgba(16,185,129,0.4);
+            letter-spacing: 0.3px;
+        }
+
+        .btn-attendance:hover { background: linear-gradient(135deg, #047857, #059669); transform: translateY(-1px); box-shadow: 0 6px 22px rgba(16,185,129,0.5); }
+        .btn-attendance:active { transform: scale(0.97); }
+        .btn-attendance:disabled {
+            background: rgba(16,185,129,0.15);
+            color: #6ee7b7;
+            box-shadow: none;
+            cursor: default;
+            transform: none;
+            border: 1px solid rgba(16,185,129,0.25);
+        }
+
+        .attendance-done-note {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.25);
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+            color: #6ee7b7;
+            font-size: 13px;
+            margin-top: 8px;
+            animation: alertIn 0.3s ease-out;
+        }
+
+        @keyframes alertIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* PAYMENT SECTION */
         .payment-section {
             margin-top: 18px;
@@ -798,7 +843,6 @@
                 <h2>පන්තිය තෝරන්න</h2>
                 <p id="studentNameHeader"></p>
             </div>
-            <div class="attendance-note">✅ පැමිණීම ස්වයංක්‍රීයව සටහන් කර ඇත</div>
             <div class="modal-content" id="subjectList"></div>
             <button class="btn-back" onclick="closeSubjectModal()">◄ ආපසු</button>
         </div>
@@ -826,7 +870,8 @@
                 <h2>ශිෂ්‍ය වාර්තාව</h2>
             </div>
             <div class="modal-content">
-                <div class="attendance-note">✅ පැමිණීම සටහන් කර ඇත</div>
+                <!-- Attendance action area -->
+                <div id="attendanceArea" style="margin-bottom:14px;"></div>
 
                 <div id="balanceAlert"></div>
 
@@ -1031,6 +1076,7 @@
         function closeStudentModal() {
             document.getElementById('studentModal').classList.remove('show');
             document.getElementById('paymentSection').style.display = 'none';
+            document.getElementById('attendanceArea').innerHTML = '';
             paymentAmount = '0';
             document.getElementById('paymentDisplay').textContent = '0';
             document.getElementById('paymentWarning').innerHTML = '';
@@ -1188,38 +1234,14 @@
                     return;
                 }
 
-                saveEntry(studentNo);
                 isDuplicateConfirmed = false;
 
-                const now = new Date();
-                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                const newAttendance = `${now.getDate()}/${monthNames[now.getMonth()]}/${now.getFullYear()}`;
-
-                for (const student of data) {
-                    let updatedSreport = student.sreport || '';
-                    updatedSreport = (updatedSreport && updatedSreport !== 'EMPTY')
-                        ? updatedSreport + ', ' + newAttendance
-                        : newAttendance;
-
-                    const { error: updateError } = await supabaseClient
-                        .from('sipminireport').update({ sreport: updatedSreport }).eq('id', student.id);
-
-                    if (updateError) {
-                        showErrorModal('පැමිණීම යාවත්කාලීන කිරීමේ දෝෂය: ' + updateError.message, updateError);
-                    }
-                }
-
+                // Do NOT mark attendance here — wait for "පැමිණියා" button
                 if (data.length === 1) {
                     currentStudent = data[0];
-                    currentStudent.sreport = (currentStudent.sreport && currentStudent.sreport !== 'EMPTY')
-                        ? currentStudent.sreport + ', ' + newAttendance
-                        : newAttendance;
                     showStudentDetails();
                 } else {
-                    availableSubjects = data.map(s => ({
-                        ...s,
-                        sreport: (s.sreport && s.sreport !== 'EMPTY') ? s.sreport + ', ' + newAttendance : newAttendance
-                    }));
+                    availableSubjects = data;
                     showSubjectSelection(availableSubjects);
                 }
             } catch (error) {
@@ -1240,7 +1262,6 @@
                 const paymentStatus = checkCurrentMonthPayment(subject.payment, subject.monthly_fee);
                 let statusClass = paymentStatus.paid ? 'status-paid' : (paymentStatus.paidAmount > 0 ? 'status-partial' : 'status-unpaid');
 
-                // Build class type badges HTML
                 const classTypeBadgesHTML = subject.class_type
                     ? `<div class="class-type-badges">${renderClassTypeBadges(subject.class_type)}</div>`
                     : '';
@@ -1292,6 +1313,12 @@
             document.getElementById('paymentStatus').innerHTML =
                 `<span class="payment-status ${statusClass}">${paymentStatus.status}</span>`;
 
+            // ── Attendance button (not yet marked) ──
+            document.getElementById('attendanceArea').innerHTML = `
+                <button class="btn-attendance" id="attendanceBtn" onclick="markAttendance()">
+                    🟢 පැමිණියා
+                </button>`;
+
             const balanceAlert = document.getElementById('balanceAlert');
             if (balanceInfo.type === 'free') {
                 balanceAlert.innerHTML = `<div class="balance-alert positive"><div>🎉 FREE CARD</div><div style="font-size:13px;margin-top:4px;color:var(--text-muted);">ගාස්තු අය නොකෙරේ</div></div>`;
@@ -1304,6 +1331,50 @@
             }
 
             document.getElementById('studentModal').classList.add('show');
+        }
+
+        // ── Mark attendance only when "පැමිණියා" is clicked ──
+        async function markAttendance() {
+            const btn = document.getElementById('attendanceBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ සටහන් කරමින්...';
+
+            try {
+                const now = new Date();
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const newAttendance = `${now.getDate()}/${monthNames[now.getMonth()]}/${now.getFullYear()}`;
+
+                const updatedSreport = (currentStudent.sreport && currentStudent.sreport !== 'EMPTY')
+                    ? currentStudent.sreport + ', ' + newAttendance
+                    : newAttendance;
+
+                const { error } = await supabaseClient
+                    .from('sipminireport')
+                    .update({ sreport: updatedSreport })
+                    .eq('id', currentStudent.id);
+
+                if (error) {
+                    btn.disabled = false;
+                    btn.textContent = '🟢 පැමිණියා';
+                    showErrorModal('පැමිණීම සටහන් කිරීමේ දෝෂය: ' + error.message, error);
+                    return;
+                }
+
+                // Update local state
+                currentStudent.sreport = updatedSreport;
+                saveEntry(currentStudent.studentno);
+
+                // Show success state
+                document.getElementById('attendanceArea').innerHTML = `
+                    <div class="attendance-done-note">
+                        ✅ පැමිණීම සාර්ථකව සටහන් කරන ලදී! &nbsp;—&nbsp; ${newAttendance}
+                    </div>`;
+
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = '🟢 පැමිණියා';
+                showErrorModal('දෝෂයක්: ' + error.message, error);
+            }
         }
 
         function showPaymentSection() {
