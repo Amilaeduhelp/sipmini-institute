@@ -61,7 +61,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* HEADER */
         .header {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
             color: white;
@@ -113,12 +112,8 @@
             flex-shrink: 0;
         }
 
-        .back-btn:hover {
-            background: rgba(255,255,255,0.25);
-            border-color: rgba(255,255,255,0.5);
-        }
+        .back-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); }
 
-        /* TABS */
         .tabs-container {
             display: flex;
             background: var(--surface2);
@@ -142,10 +137,7 @@
             border-bottom: 3px solid transparent;
         }
 
-        .tab:hover {
-            color: var(--text);
-            background: rgba(255,255,255,0.04);
-        }
+        .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 
         .tab.active {
             color: #818cf8;
@@ -153,7 +145,6 @@
             background: rgba(129,140,248,0.06);
         }
 
-        /* CONTENT */
         .content-wrapper { padding: 30px; }
 
         .page-title {
@@ -171,7 +162,6 @@
             margin-bottom: 24px;
         }
 
-        /* STATUS */
         .connection-status {
             padding: 10px 15px;
             border-radius: 8px;
@@ -188,9 +178,7 @@
         .alert.show { display: block; }
         .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
         .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
-        .alert-info { background: rgba(6,182,212,0.1); color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
 
-        /* SPINNER */
         .loading-spinner { display: none; text-align: center; padding: 50px; color: var(--text-muted); }
         .loading-spinner.show { display: block; }
         .spinner {
@@ -203,7 +191,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* STATS */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -222,7 +209,6 @@
         .stat-number { font-size: 30px; font-weight: 700; color: #a5b4fc; }
         .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; }
 
-        /* FORM SECTION */
         .form-section {
             background: var(--surface3);
             border: 1px solid var(--border);
@@ -265,19 +251,109 @@
             box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
         }
 
-        input[readonly] {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
+        input[readonly] { opacity: 0.6; cursor: not-allowed; }
         input::placeholder { color: rgba(148,163,184,0.4); }
         select option { background: #1a1a2e; color: var(--text); }
 
-        .helper-text {
-            font-size: 12px;
+        .helper-text { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+        /* CLASS TYPE SECTION */
+        .class-type-section {
+            margin-bottom: 18px;
+        }
+
+        .class-type-label {
+            display: block;
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 12px;
             color: var(--text-muted);
-            margin-top: 6px;
-            line-height: 1.5;
+        }
+
+        .class-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .class-type-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .class-type-item:has(.class-type-checkbox:checked) {
+            border-color: rgba(129,140,248,0.5);
+            background: rgba(129,140,248,0.07);
+        }
+
+        .class-type-checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .class-type-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #818cf8;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .class-type-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .class-fee-row {
+            display: none;
+            padding: 0 14px 12px 14px;
+        }
+
+        .class-fee-row.visible {
+            display: block;
+        }
+
+        .class-fee-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(129,140,248,0.3);
+            border-radius: 7px;
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .class-fee-input:focus {
+            border-color: #818cf8;
+            background: rgba(129,140,248,0.1);
+            box-shadow: 0 0 0 2px rgba(129,140,248,0.15);
+        }
+
+        .class-fee-input::placeholder { color: rgba(148,163,184,0.4); font-size: 12px; }
+
+        .fee-input-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .class-type-validation {
+            font-size: 12px;
+            color: #fca5a5;
+            margin-top: 8px;
+            display: none;
         }
 
         /* BUTTONS */
@@ -343,11 +419,19 @@
 
         .class-info strong { color: #818cf8; font-size: 14px; }
         .class-info span { color: var(--text-muted); font-size: 13px; }
+        .class-fee { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
-        .class-fee {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 3px;
+        .class-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(129,140,248,0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(129,140,248,0.25);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 4px;
+            margin-top: 2px;
         }
 
         .free-badge {
@@ -447,6 +531,11 @@
             .content-wrapper { padding: 18px; }
             .modal-actions { grid-template-columns: 1fr; }
             .class-item { flex-direction: column; align-items: flex-start; }
+            .class-type-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .class-type-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -486,7 +575,6 @@
 
             <div id="mainContent" style="display: none;">
 
-                <!-- Stats -->
                 <div class="stats">
                     <div class="stat-card">
                         <div class="stat-number" id="totalStudents">0</div>
@@ -556,18 +644,98 @@
                             </select>
                         </div>
 
+                        <!-- CLASS TYPE CHECKBOXES -->
+                        <div class="class-type-section">
+                            <span class="class-type-label">පන්ති වර්ගය — Class Type * (එකක් හෝ කිහිපයක් තෝරන්න)</span>
+                            <div class="class-type-grid" id="classTypeGrid">
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Theory" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Theory</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Theory">
+                                        <span class="fee-input-label">Theory ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Theory" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Revision" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Revision</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Revision">
+                                        <span class="fee-input-label">Revision ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Revision" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Paper class" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Paper class</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Paper class">
+                                        <span class="fee-input-label">Paper class ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Paper class" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Grammar class" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Grammar class</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Grammar class">
+                                        <span class="fee-input-label">Grammar class ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Grammar class" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Spoken class" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Spoken class</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Spoken class">
+                                        <span class="fee-input-label">Spoken class ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Spoken class" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Practical" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Practical</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Practical">
+                                        <span class="fee-input-label">Practical ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Practical" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                                <div class="class-type-item">
+                                    <label class="class-type-checkbox-row">
+                                        <input type="checkbox" class="class-type-checkbox" value="Extra class" onchange="toggleFeeRow(this)">
+                                        <span class="class-type-name">Extra class</span>
+                                    </label>
+                                    <div class="class-fee-row" id="fee-Extra class">
+                                        <span class="fee-input-label">Extra class ගාස්තුව — Fee (Rs.)</span>
+                                        <input type="number" class="class-fee-input" id="feeamt-Extra class" placeholder="0 = නොමිලේ / FREE" min="0" step="0.01">
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="class-type-validation" id="classTypeValidation">
+                                ⚠️ කරුණාකර අවම වශයෙන් පන්ති වර්ගයක් හෝ ටික් කරන්න — Please select at least one class type.
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>දුරකථන අංකය — Phone Number</label>
                             <input type="text" id="phoneno" placeholder="0771234567">
                             <div class="helper-text">Optional — විකල්පයකි</div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>මාසික ගාස්තුව — Monthly Fee (Rs.) *</label>
-                            <input type="number" id="monthly_fee" placeholder="0 = නොමිලේ / FREE" required min="0" step="0.01">
-                            <div class="helper-text">
-                                0 ඇතුළත් කළහොත් නොමිලේ පන්තියක් ලෙස සලකයි. Enter 0 for FREE class.
-                            </div>
                         </div>
 
                         <button type="submit" class="btn btn-success" id="submitBtn">➕ පන්තිය එකතු කරන්න</button>
@@ -675,6 +843,34 @@
             } catch { return false; }
         }
 
+        // Toggle fee input row visibility when checkbox is clicked
+        function toggleFeeRow(checkbox) {
+            const value = checkbox.value;
+            const feeRow = document.getElementById('fee-' + value);
+            if (checkbox.checked) {
+                feeRow.classList.add('visible');
+            } else {
+                feeRow.classList.remove('visible');
+                const feeInput = document.getElementById('feeamt-' + value);
+                if (feeInput) feeInput.value = '';
+            }
+            // Hide validation message once at least one is checked
+            const anyChecked = [...document.querySelectorAll('.class-type-checkbox')].some(cb => cb.checked);
+            document.getElementById('classTypeValidation').style.display = anyChecked ? 'none' : 'none';
+        }
+
+        // Collect selected class types and their fees
+        function getSelectedClassTypes() {
+            const result = [];
+            document.querySelectorAll('.class-type-checkbox:checked').forEach(cb => {
+                const type = cb.value;
+                const feeInput = document.getElementById('feeamt-' + type);
+                const fee = parseFloat(feeInput ? feeInput.value : 0) || 0;
+                result.push({ type, fee });
+            });
+            return result;
+        }
+
         async function generateStudentNumber() {
             try {
                 const { data, error } = await supabaseClient
@@ -710,7 +906,6 @@
                     return;
                 }
 
-                // Group by studentno
                 const grouped = {};
                 let freeCount = 0;
 
@@ -727,10 +922,16 @@
                 document.getElementById('studentsList').innerHTML = Object.entries(grouped).map(([sno, data]) => {
                     const classesHTML = data.classes.map(c => {
                         const fee = parseFloat(c.monthly_fee) || 0;
+                        // Show class_type badges if present
+                        const classTypeBadges = c.class_type
+                            ? c.class_type.split('/').map(t => t.trim()).filter(Boolean)
+                                .map(t => `<span class="class-type-badge">${t}</span>`).join('')
+                            : '';
                         return `
                             <div class="class-item">
                                 <div class="class-info">
                                     <strong>${c.subject}</strong> &nbsp;—&nbsp; <span>${c.teachername}</span>
+                                    <div style="margin-top:4px;">${classTypeBadges}</div>
                                     <div class="class-fee">
                                         Rs. ${fee.toFixed(2)}
                                         ${fee === 0 ? '<span class="free-badge">FREE</span>' : ''}
@@ -766,30 +967,49 @@
             document.getElementById('freeClasses').textContent = free;
         }
 
-        // Form submit
+        // Form submit — one insert per checked class type
         document.getElementById('studentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const selectedTypes = getSelectedClassTypes();
+            if (selectedTypes.length === 0) {
+                document.getElementById('classTypeValidation').style.display = 'block';
+                showAlert('කරුණාකර අවම වශයෙන් පන්ති වර්ගයක් හෝ ටික් කරන්න.', 'error');
+                return;
+            }
+            document.getElementById('classTypeValidation').style.display = 'none';
+
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = '⏳ එකතු කරමින්...';
 
-            const studentData = {
+            const baseData = {
                 studentno: document.getElementById('studentno').value.trim().toLowerCase(),
                 studentname: document.getElementById('studentname').value.trim(),
                 teachername: document.getElementById('teachername').value.trim(),
                 subject: document.getElementById('subject').value.trim(),
                 phoneno: document.getElementById('phoneno').value.trim(),
-                monthly_fee: parseFloat(document.getElementById('monthly_fee').value) || 0,
                 treport: 0,
                 ireport: 0
             };
 
-            if (!studentData.studentno.match(/^s\d{4}$/)) {
+            if (!baseData.studentno.match(/^s\d{4}$/)) {
                 showAlert('ශිෂ්‍ය අංකය s0001 ආකෘතියෙන් විය යුතුයි', 'error');
                 btn.disabled = false;
                 btn.textContent = '➕ පන්තිය එකතු කරන්න';
                 return;
             }
+
+            // Build class_type string: "Theory/Revision" etc.
+            const classTypeStr = selectedTypes.map(t => t.type).join('/');
+            // Use sum of all selected fees as monthly_fee
+            const totalFee = selectedTypes.reduce((sum, t) => sum + t.fee, 0);
+
+            const studentData = {
+                ...baseData,
+                class_type: classTypeStr,
+                monthly_fee: totalFee
+            };
 
             try {
                 const { data: existing, error: checkError } = await supabaseClient
@@ -802,7 +1022,8 @@
                 if (existing && existing.length > 0) {
                     const duplicate = existing.find(s =>
                         s.subject.toLowerCase() === studentData.subject.toLowerCase() &&
-                        s.teachername.toLowerCase() === studentData.teachername.toLowerCase()
+                        s.teachername.toLowerCase() === studentData.teachername.toLowerCase() &&
+                        (s.class_type || '') === classTypeStr
                     );
 
                     if (duplicate) {
@@ -839,6 +1060,7 @@
             document.getElementById('existingClassesList').innerHTML = existingClasses.map(c => `
                 <div class="existing-class-item">
                     <strong>${c.subject}</strong> — ${c.teachername}
+                    ${c.class_type ? `<br><small>📋 ${c.class_type}</small>` : ''}
                     <br><small>Rs. ${parseFloat(c.monthly_fee) || 0}</small>
                 </div>`).join('');
 
@@ -863,10 +1085,15 @@
             try {
                 const { error } = await supabaseClient.from('sipminireport').insert([studentData]);
                 if (error) throw error;
-                showAlert(`✅ ${studentData.subject} පන්තිය ${studentData.studentname} සඳහා එකතු කරන ලදි!`, 'success');
+                showAlert(`✅ ${studentData.subject} (${studentData.class_type}) පන්තිය ${studentData.studentname} සඳහා එකතු කරන ලදි!`, 'success');
+                // Reset form
                 document.getElementById('studentForm').reset();
                 document.getElementById('teachername').value = '';
                 document.getElementById('subject').value = '';
+                // Hide all fee rows & uncheck
+                document.querySelectorAll('.class-type-checkbox').forEach(cb => { cb.checked = false; });
+                document.querySelectorAll('.class-fee-row').forEach(row => row.classList.remove('visible'));
+                document.querySelectorAll('.class-fee-input').forEach(inp => inp.value = '');
                 await loadStudents();
             } catch (error) {
                 showAlert('දෝෂයක් — Error: ' + error.message, 'error');
