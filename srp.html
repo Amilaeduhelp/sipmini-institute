@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Register - SIPMINI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --surface3: #1e2140;
+            --border: rgba(255,255,255,0.08);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 20%, rgba(79,70,229,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
+            color: white;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -10%;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 14px; }
+
+        .header-logo {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+
+        .header-title-group .subtitle-tag {
+            font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .back-btn {
+            padding: 9px 18px;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        /* TABS */
+        .tabs-container {
+            display: flex;
+            background: var(--surface2);
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: none;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .tab.active {
+            color: #818cf8;
+            border-bottom-color: #818cf8;
+            background: rgba(129,140,248,0.06);
+        }
+
+        /* CONTENT */
+        .content-wrapper { padding: 30px; }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 6px;
+            color: var(--text);
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* STATUS */
+        .connection-status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+        .status-success { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+        .status-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+
+        .alert { padding: 13px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+        .alert.show { display: block; }
+        .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+        .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .alert-info { background: rgba(6,182,212,0.1); color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
+
+        /* SPINNER */
+        .loading-spinner { display: none; text-align: center; padding: 50px; color: var(--text-muted); }
+        .loading-spinner.show { display: block; }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 44px; height: 44px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* STATS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(79,70,229,0.25), rgba(124,58,237,0.25));
+            border: 1px solid rgba(129,140,248,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number { font-size: 30px; font-weight: 700; color: #a5b4fc; }
+        .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; }
+
+        /* FORM SECTION */
+        .form-section {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-left: 3px solid #818cf8;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+        }
+
+        .form-section h3 { color: #818cf8; margin-bottom: 20px; font-size: 16px; font-weight: 700; }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text);
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            background: rgba(79,70,229,0.08);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+        }
+
+        input[readonly] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        input::placeholder { color: rgba(148,163,184,0.4); }
+        select option { background: #1a1a2e; color: var(--text); }
+
+        .helper-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 8px;
+            margin-top: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79,70,229,0.35); }
+        .btn-primary:hover:not(:disabled) { background: #6366f1; }
+
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+
+        .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+        .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.28); }
+
+        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .btn-success:hover:not(:disabled) { background: #059669; }
+
+        /* STUDENTS LIST */
+        .students-section h3 { color: #818cf8; margin-bottom: 16px; font-size: 16px; font-weight: 700; }
+
+        .student-card {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-left: 3px solid #818cf8;
+            padding: 18px 20px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+        }
+
+        .student-card:hover { border-left-color: var(--accent); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+
+        .student-card h4 { color: var(--text); font-size: 15px; margin-bottom: 6px; }
+        .student-card .meta { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+        .student-card .meta strong { color: var(--text); }
+
+        .class-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .class-info strong { color: #818cf8; font-size: 14px; }
+        .class-info span { color: var(--text-muted); font-size: 13px; }
+
+        .class-fee {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .free-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(16,185,129,0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 50px 20px;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+            animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .modal-header { text-align: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .modal-header h2 { color: #f59e0b; font-size: 17px; margin-bottom: 4px; }
+        .modal-header p { color: var(--text-muted); font-size: 13px; }
+
+        .info-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .info-row:last-child { border-bottom: none; }
+        .info-row strong { color: #818cf8; }
+        .info-row span { color: var(--text); }
+
+        .existing-class-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-left: 3px solid #818cf8;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin: 6px 0;
+            font-size: 13px;
+        }
+
+        .existing-class-item strong { color: #818cf8; }
+        .existing-class-item small { color: var(--text-muted); }
+
+        .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+
+        @media (max-width: 768px) {
+            .header { padding: 18px 20px; }
+            .header h1 { font-size: 17px; }
+            .tab { padding: 14px 14px; font-size: 12px; }
+            .content-wrapper { padding: 18px; }
+            .modal-actions { grid-template-columns: 1fr; }
+            .class-item { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-logo">🎓</div>
+                <div class="header-title-group">
+                    <div class="subtitle-tag">SIPMINI</div>
+                    <h1>Admin Panel</h1>
+                </div>
+            </div>
+            <a href="index.html" class="back-btn">← ආපසු</a>
+        </div>
+
+        <div class="tabs-container">
+            <a href="er.html" class="tab">✏️ Edit Records</a>
+            <a href="ar.html" class="tab">💰 Account Reports</a>
+            <a href="sr.html" class="tab">📊 Student Reports</a>
+            <a href="as.html" class="tab">⚙️ Access Setting</a>
+            <a href="ms.html" class="tab">🏫 Management System</a>
+            <a href="srp.html" class="tab active">📝 Student Register</a>
+        </div>
+
+        <div class="content-wrapper">
+            <h2 class="page-title">📝 සිසු ලියාපදිංචිය</h2>
+            <p class="page-subtitle">Student Registration & Class Management</p>
+
+            <div id="connectionStatus" class="connection-status"></div>
+            <div id="alertBox" class="alert"></div>
+
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>දත්ත පූරණය වෙමින්... Connecting to database...</p>
+            </div>
+
+            <div id="mainContent" style="display: none;">
+
+                <!-- Stats -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalStudents">0</div>
+                        <div class="stat-label">මුළු ශිෂ්‍ය සංඛ්‍යාව<br>Total Students</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalClasses">0</div>
+                        <div class="stat-label">මුළු පන්ති සංඛ්‍යාව<br>Total Classes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="freeClasses">0</div>
+                        <div class="stat-label">නොමිලේ පන්ති<br>Free Classes</div>
+                    </div>
+                </div>
+
+                <!-- Add Student Form -->
+                <div class="form-section">
+                    <h3>➕ නව ශිෂ්‍යයෙකු / පන්තියක් එකතු කරන්න</h3>
+                    <form id="studentForm">
+
+                        <div class="form-group">
+                            <label>ශිෂ්‍ය අංකය — Student Number *</label>
+                            <input type="text" id="studentno" placeholder="s0001" required readonly>
+                            <div class="helper-text">
+                                ස්වයංක්‍රීයව ජනනය වේ. එකම අංකය බහු පන්ති සඳහා භාවිතා කරයි.<br>
+                                Auto-generated. Same number for multiple classes.
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ශිෂ්‍ය නම — Student Name *</label>
+                            <input type="text" id="studentname" placeholder="නම ඇතුළු කරන්න" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ගුරුවරයාගේ නම — Teacher Name *</label>
+                            <select id="teachername" required>
+                                <option value="">-- ගුරුවරයෙකු තෝරන්න --</option>
+                                <option value="මහාචාර්ය චරිත් ජයතිලක">මහාචාර්ය චරිත් ජයතිලක</option>
+                                <option value="ධම්මික ගීකියනගේ">ධම්මික ගීකියනගේ</option>
+                                <option value="දිනේෂ් හල්ඕවිට">දිනේෂ් හල්ඕවිට</option>
+                                <option value="ඉරේෂා පින්තු">ඉරේෂා පින්තු</option>
+                                <option value="හර්ෂණ ලියනආරච්චි">හර්ෂණ ලියනආරච්චි</option>
+                                <option value="නිෂා ඉහළගම">නිෂා ඉහළගම</option>
+                                <option value="අමිල උඩවත්ත">අමිල උඩවත්ත</option>
+                                <option value="සුපෙම් අල්මේදා">සුපෙම් අල්මේදා</option>
+                                <option value="ප්‍රසාධි ජයතිලක">ප්‍රසාධි ජයතිලක</option>
+                                <option value="දිල්රුක්ෂි රණසිංහ">දිල්රුක්ෂි රණසිංහ</option>
+                                <option value="ඉෂිණි පබෝදා">ඉෂිණි පබෝදා</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>විෂයය — Subject *</label>
+                            <select id="subject" required>
+                                <option value="">-- විෂයය තෝරන්න --</option>
+                                <option value="Physics">Physics — භෞතික විද්‍යාව</option>
+                                <option value="Combined Maths">Combined Maths — ඒකාබද්ධ ගණිතය</option>
+                                <option value="Chemistry">Chemistry — රසායන විද්‍යාව</option>
+                                <option value="Maths">Maths — ගණිතය</option>
+                                <option value="Sinhala">Sinhala — සිංහල</option>
+                                <option value="English">English — ඉංග්‍රීසි</option>
+                                <option value="History">History — ඉතිහාසය</option>
+                                <option value="Art">Art — චිත්‍ර</option>
+                                <option value="Science">Science — විද්‍යාව</option>
+                                <option value="Bio Science">Bio Science — ජීව විද්‍යාව</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>දුරකථන අංකය — Phone Number</label>
+                            <input type="text" id="phoneno" placeholder="0771234567">
+                            <div class="helper-text">Optional — විකල්පයකි</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>මාසික ගාස්තුව — Monthly Fee (Rs.) *</label>
+                            <input type="number" id="monthly_fee" placeholder="0 = නොමිලේ / FREE" required min="0" step="0.01">
+                            <div class="helper-text">
+                                0 ඇතුළත් කළහොත් නොමිලේ පන්තියක් ලෙස සලකයි. Enter 0 for FREE class.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success" id="submitBtn">➕ පන්තිය එකතු කරන්න</button>
+                        <button type="button" class="btn btn-secondary" onclick="loadStudents()">🔄 නැවුම් කරන්න</button>
+                    </form>
+                </div>
+
+                <!-- Students List -->
+                <div class="students-section">
+                    <h3>📋 වත්මන් ශිෂ්‍යයින් සහ පන්ති</h3>
+                    <div id="studentsList">
+                        <div class="no-data">📥 දත්ත පූරණය වෙමින්...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Student Modal -->
+    <div id="existingStudentModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚠️ ශිෂ්‍ය අංකය දැනටමත් තිබේ</h2>
+                <p>Student Number Already Exists</p>
+            </div>
+
+            <div class="info-box">
+                <div class="info-row">
+                    <strong>අංකය</strong>
+                    <span id="existingStudentNo"></span>
+                </div>
+                <div class="info-row">
+                    <strong>නම</strong>
+                    <span id="existingStudentName"></span>
+                </div>
+                <div class="info-row">
+                    <strong>දුරකථන</strong>
+                    <span id="existingStudentPhone"></span>
+                </div>
+            </div>
+
+            <p style="text-align:center; color:var(--text-muted); font-size:13px; margin-bottom:14px;">
+                මෙම ශිෂ්‍යයා සඳහා නව පන්තියක් එකතු කරන්නද?<br>
+                <small>Add new class for this student?</small>
+            </p>
+
+            <div>
+                <p style="color:#818cf8; font-size:13px; font-weight:600; margin-bottom:8px;">වත්මන් පන්ති — Current Classes:</p>
+                <div id="existingClassesList"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-success" onclick="addNewClass()" style="margin:0;">
+                    ✓ නව පන්තිය එකතු කරන්න
+                </button>
+                <button class="btn btn-secondary" onclick="closeExistingStudentModal()" style="margin:0;">
+                    ✗ අවලංගු කරන්න
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://uqgzlaxsnknheoerbfus.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxZ3psYXhzbmtuaGVvZXJiZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MjM2MTUsImV4cCI6MjA3OTI4MzYxNX0.IYWZ7ukx8J-GJMWy7cMk2BWnmzJmJjjE93yEmJie7nQ';
+
+        let supabaseClient;
+        let pendingClassData = null;
+        let existingStudentData = null;
+
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                return true;
+            } catch (e) {
+                showConnectionStatus('Failed to initialize: ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        function showConnectionStatus(message, type = 'success') {
+            const el = document.getElementById('connectionStatus');
+            el.className = `connection-status status-${type}`;
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+
+        function showAlert(message, type = 'success') {
+            const el = document.getElementById('alertBox');
+            el.className = `alert alert-${type} show`;
+            el.textContent = message;
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loadingSpinner').classList.toggle('show', show);
+            document.getElementById('mainContent').style.display = show ? 'none' : 'block';
+        }
+
+        async function testConnection() {
+            try {
+                const { error } = await supabaseClient.from('sipminireport').select('*', { count: 'exact', head: true });
+                if (error) throw error;
+                return true;
+            } catch { return false; }
+        }
+
+        async function generateStudentNumber() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('sipminireport')
+                    .select('studentno')
+                    .order('studentno', { ascending: false })
+                    .limit(1);
+                if (error) throw error;
+
+                let next = 1;
+                if (data && data.length > 0) {
+                    const num = parseInt(data[0].studentno.substring(1));
+                    next = num + 1;
+                }
+                document.getElementById('studentno').value = 's' + String(next).padStart(4, '0');
+            } catch {
+                document.getElementById('studentno').value = 's0001';
+            }
+        }
+
+        async function loadStudents() {
+            document.getElementById('studentsList').innerHTML = '<div class="no-data">📥 දත්ත පූරණය වෙමින්...</div>';
+            try {
+                const { data: classes, error } = await supabaseClient
+                    .from('sipminireport')
+                    .select('*')
+                    .order('studentno', { ascending: true });
+                if (error) throw error;
+
+                if (!classes || classes.length === 0) {
+                    document.getElementById('studentsList').innerHTML = '<div class="no-data">📭 තවම ශිෂ්‍යයින් නොමැත</div>';
+                    updateStats(0, 0, 0);
+                    return;
+                }
+
+                // Group by studentno
+                const grouped = {};
+                let freeCount = 0;
+
+                classes.forEach(c => {
+                    if (!grouped[c.studentno]) {
+                        grouped[c.studentno] = { studentname: c.studentname, phoneno: c.phoneno, classes: [] };
+                    }
+                    grouped[c.studentno].classes.push(c);
+                    if ((parseFloat(c.monthly_fee) || 0) === 0) freeCount++;
+                });
+
+                updateStats(Object.keys(grouped).length, classes.length, freeCount);
+
+                document.getElementById('studentsList').innerHTML = Object.entries(grouped).map(([sno, data]) => {
+                    const classesHTML = data.classes.map(c => {
+                        const fee = parseFloat(c.monthly_fee) || 0;
+                        return `
+                            <div class="class-item">
+                                <div class="class-info">
+                                    <strong>${c.subject}</strong> &nbsp;—&nbsp; <span>${c.teachername}</span>
+                                    <div class="class-fee">
+                                        Rs. ${fee.toFixed(2)}
+                                        ${fee === 0 ? '<span class="free-badge">FREE</span>' : ''}
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger" style="margin:0;padding:7px 14px;font-size:12px;"
+                                    onclick="deleteClass(${c.id}, '${(c.studentname||'').replace(/'/g,"\\'")}', '${(c.subject||'').replace(/'/g,"\\'")}')">
+                                    🗑️ Delete
+                                </button>
+                            </div>`;
+                    }).join('');
+
+                    return `
+                        <div class="student-card">
+                            <h4>${data.studentname} <span style="color:var(--text-muted);font-weight:400;">(${sno})</span></h4>
+                            <div class="meta">
+                                <strong>📞</strong> ${data.phoneno || 'N/A'} &nbsp;|&nbsp;
+                                <strong>📚 පන්ති:</strong> ${data.classes.length}
+                            </div>
+                            ${classesHTML}
+                        </div>`;
+                }).join('');
+            } catch (error) {
+                document.getElementById('studentsList').innerHTML =
+                    `<div class="no-data">❌ දත්ත පූරණය කිරීමේ දෝෂයක්: ${error.message}</div>`;
+                showAlert('Error loading students: ' + error.message, 'error');
+            }
+        }
+
+        function updateStats(students, classes, free) {
+            document.getElementById('totalStudents').textContent = students;
+            document.getElementById('totalClasses').textContent = classes;
+            document.getElementById('freeClasses').textContent = free;
+        }
+
+        // Form submit
+        document.getElementById('studentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ එකතු කරමින්...';
+
+            const studentData = {
+                studentno: document.getElementById('studentno').value.trim().toLowerCase(),
+                studentname: document.getElementById('studentname').value.trim(),
+                teachername: document.getElementById('teachername').value.trim(),
+                subject: document.getElementById('subject').value.trim(),
+                phoneno: document.getElementById('phoneno').value.trim(),
+                monthly_fee: parseFloat(document.getElementById('monthly_fee').value) || 0,
+                treport: 0,
+                ireport: 0
+            };
+
+            if (!studentData.studentno.match(/^s\d{4}$/)) {
+                showAlert('ශිෂ්‍ය අංකය s0001 ආකෘතියෙන් විය යුතුයි', 'error');
+                btn.disabled = false;
+                btn.textContent = '➕ පන්තිය එකතු කරන්න';
+                return;
+            }
+
+            try {
+                const { data: existing, error: checkError } = await supabaseClient
+                    .from('sipminireport')
+                    .select('*')
+                    .eq('studentno', studentData.studentno);
+
+                if (checkError) throw checkError;
+
+                if (existing && existing.length > 0) {
+                    const duplicate = existing.find(s =>
+                        s.subject.toLowerCase() === studentData.subject.toLowerCase() &&
+                        s.teachername.toLowerCase() === studentData.teachername.toLowerCase()
+                    );
+
+                    if (duplicate) {
+                        showAlert('මෙම ශිෂ්‍යයා මෙම පන්තිය දැනටමත් follow කරයි!', 'error');
+                        btn.disabled = false;
+                        btn.textContent = '➕ පන්තිය එකතු කරන්න';
+                        return;
+                    }
+
+                    showExistingStudentModal(existing, studentData);
+                    btn.disabled = false;
+                    btn.textContent = '➕ පන්තිය එකතු කරන්න';
+                    return;
+                }
+
+                await insertStudent(studentData);
+                await generateStudentNumber();
+            } catch (error) {
+                showAlert('දෝෂයක් — Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '➕ පන්තිය එකතු කරන්න';
+            }
+        });
+
+        function showExistingStudentModal(existingClasses, newClassData) {
+            existingStudentData = existingClasses[0];
+            pendingClassData = newClassData;
+
+            document.getElementById('existingStudentNo').textContent = existingStudentData.studentno;
+            document.getElementById('existingStudentName').textContent = existingStudentData.studentname;
+            document.getElementById('existingStudentPhone').textContent = existingStudentData.phoneno || 'N/A';
+
+            document.getElementById('existingClassesList').innerHTML = existingClasses.map(c => `
+                <div class="existing-class-item">
+                    <strong>${c.subject}</strong> — ${c.teachername}
+                    <br><small>Rs. ${parseFloat(c.monthly_fee) || 0}</small>
+                </div>`).join('');
+
+            document.getElementById('existingStudentModal').classList.add('show');
+        }
+
+        function closeExistingStudentModal() {
+            document.getElementById('existingStudentModal').classList.remove('show');
+            pendingClassData = null;
+            existingStudentData = null;
+        }
+
+        async function addNewClass() {
+            if (!pendingClassData || !existingStudentData) return;
+            pendingClassData.studentname = existingStudentData.studentname;
+            pendingClassData.phoneno = existingStudentData.phoneno;
+            await insertStudent(pendingClassData);
+            closeExistingStudentModal();
+        }
+
+        async function insertStudent(studentData) {
+            try {
+                const { error } = await supabaseClient.from('sipminireport').insert([studentData]);
+                if (error) throw error;
+                showAlert(`✅ ${studentData.subject} පන්තිය ${studentData.studentname} සඳහා එකතු කරන ලදි!`, 'success');
+                document.getElementById('studentForm').reset();
+                document.getElementById('teachername').value = '';
+                document.getElementById('subject').value = '';
+                await loadStudents();
+            } catch (error) {
+                showAlert('දෝෂයක් — Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteClass(id, name, subject) {
+            if (!confirm(`ඔබට ${name} සඳහා ${subject} පන්තිය ඉවත් කිරීමට අවශ්‍යද?`)) return;
+            try {
+                const { error } = await supabaseClient.from('sipminireport').delete().eq('id', id);
+                if (error) throw error;
+                showAlert(`✅ ${subject} පන්තිය ඉවත් කරන ලදි!`, 'success');
+                await loadStudents();
+            } catch (error) {
+                showAlert('Delete error: ' + error.message, 'error');
+            }
+        }
+
+        document.getElementById('existingStudentModal').addEventListener('click', e => {
+            if (e.target.id === 'existingStudentModal') closeExistingStudentModal();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!initSupabase()) { showLoading(false); return; }
+            const ok = await testConnection();
+            if (!ok) {
+                showConnectionStatus('❌ Database සම්බන්ධ කිරීමට නොහැකි විය', 'error');
+                showLoading(false);
+                return;
+            }
+            showConnectionStatus('✅ Connected successfully!', 'success');
+            await generateStudentNumber();
+            await loadStudents();
+            showLoading(false);
+        });
+    </script>
+</body>
+</html>
