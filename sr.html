@@ -63,7 +63,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* HEADER */
         .header {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #7c3aed 100%);
             color: white;
@@ -117,7 +116,6 @@
 
         .back-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); }
 
-        /* TABS */
         .tabs-container {
             display: flex;
             background: var(--surface2);
@@ -149,10 +147,8 @@
             background: rgba(52,211,153,0.06);
         }
 
-        /* CONTENT */
         .content-wrapper { padding: 30px; }
 
-        /* STATUS & ALERTS */
         .connection-status {
             padding: 10px 15px;
             border-radius: 8px;
@@ -172,7 +168,6 @@
         .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
         .alert-info { background: rgba(6,182,212,0.1); color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
 
-        /* SPINNER */
         .loading-spinner { display: none; text-align: center; padding: 50px; color: var(--text-muted); }
         .loading-spinner.show { display: block; }
         .spinner {
@@ -185,7 +180,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* PAGE HEADER */
         .page-header {
             text-align: center;
             margin-bottom: 28px;
@@ -196,7 +190,6 @@
         .page-header h2 { color: var(--text); font-size: 24px; font-weight: 700; margin-bottom: 6px; }
         .page-header p { color: var(--text-muted); font-size: 14px; font-family: 'Noto Sans Sinhala', sans-serif; }
 
-        /* SEARCH SECTION */
         .search-section {
             background: var(--surface3);
             border: 1px solid var(--border);
@@ -250,7 +243,6 @@
 
         .helper-text { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
 
-        /* BUTTONS */
         .btn {
             padding: 11px 22px;
             border: none;
@@ -280,7 +272,6 @@
         .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 14px rgba(37,211,102,0.3); }
         .btn-whatsapp:hover:not(:disabled) { background: #20BA5A; }
 
-        /* REPORT CONTAINER */
         .report-container {
             background: var(--surface3);
             border: 1px solid var(--border);
@@ -300,7 +291,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* REPORT HEADER */
         .report-header {
             text-align: center;
             margin-bottom: 28px;
@@ -312,7 +302,6 @@
         .report-header h3 { color: var(--text); font-size: 20px; margin-bottom: 6px; font-weight: 700; }
         .report-header p { color: var(--text-muted); font-size: 14px; }
 
-        /* SUMMARY SECTION */
         .summary-section {
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
@@ -344,7 +333,6 @@
         .balance-positive { color: #34d399 !important; }
         .balance-negative { color: #fca5a5 !important; }
 
-        /* MONTHLY BREAKDOWN */
         .monthly-breakdown {
             margin-top: 18px;
             background: var(--surface2);
@@ -386,7 +374,6 @@
 
         .no-data { text-align: center; padding: 12px; color: var(--text-muted); font-size: 13px; font-style: italic; }
 
-        /* REPORT SECTION */
         .report-section {
             margin-bottom: 24px;
             background: rgba(255,255,255,0.02);
@@ -398,7 +385,6 @@
 
         .report-section h3 { color: #818cf8; margin-bottom: 16px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 
-        /* CLASS CARDS */
         .class-card {
             background: var(--surface2);
             border: 1px solid var(--border);
@@ -413,7 +399,7 @@
         .class-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 12px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
@@ -421,7 +407,21 @@
             gap: 8px;
         }
 
+        .class-title-group { display: flex; flex-direction: column; gap: 6px; }
         .class-title { font-size: 16px; font-weight: 700; color: var(--text); }
+
+        .class-type-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+
+        .class-type-badge {
+            display: inline-block;
+            padding: 3px 9px;
+            background: rgba(129,140,248,0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(129,140,248,0.25);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
 
         .fee-badge {
             background: rgba(16,185,129,0.15);
@@ -431,6 +431,7 @@
             border-radius: 20px;
             font-weight: 600;
             font-size: 13px;
+            white-space: nowrap;
         }
 
         .fee-badge.free {
@@ -459,7 +460,6 @@
         .detail-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .detail-value { font-size: 17px; font-weight: 700; color: var(--text); }
 
-        /* REPORT ACTIONS */
         .report-actions {
             display: flex;
             gap: 12px;
@@ -789,10 +789,19 @@
                         const att = cls.sreport ? cls.sreport.split(',').filter(a => a.trim()) : [];
                         const pay = cls.payment ? cls.payment.split(',').filter(p => p.trim()) : [];
                         const balance = parseFloat(cls.balance_amount) || 0;
+
+                        const classTypeBadges = cls.class_type
+                            ? cls.class_type.split('/').map(t => t.trim()).filter(Boolean)
+                                .map(t => `<span class="class-type-badge">${t}</span>`).join('')
+                            : '';
+
                         return `
                             <div class="class-card">
                                 <div class="class-header">
-                                    <div class="class-title">${cls.subject}</div>
+                                    <div class="class-title-group">
+                                        <div class="class-title">${cls.subject}</div>
+                                        ${classTypeBadges ? `<div class="class-type-badges">${classTypeBadges}</div>` : ''}
+                                    </div>
                                     <div class="fee-badge ${fee === 0 ? 'free' : ''}">${fee === 0 ? 'FREE' : 'Rs. ' + fee.toFixed(2)}</div>
                                 </div>
                                 <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px;">
