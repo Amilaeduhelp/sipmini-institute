@@ -366,7 +366,6 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            group: true;
         }
 
         .nav-card::before {
@@ -434,12 +433,12 @@
             gap: 10px;
         }
 
-        /* Color themes per card */
         .card-indigo   { --card-color: #818cf8; --card-color-bg: rgba(129,140,248,0.12); }
         .card-cyan     { --card-color: #22d3ee; --card-color-bg: rgba(34,211,238,0.12); }
         .card-emerald  { --card-color: #34d399; --card-color-bg: rgba(52,211,153,0.12); }
         .card-amber    { --card-color: #fbbf24; --card-color-bg: rgba(251,191,36,0.12); }
         .card-rose     { --card-color: #fb7185; --card-color-bg: rgba(251,113,133,0.12); }
+        .card-violet   { --card-color: #a78bfa; --card-color-bg: rgba(167,139,250,0.12); }
 
         @media (max-width: 600px) {
             .panel-header { padding: 18px 20px; }
@@ -506,6 +505,9 @@
             <a href="ms.html" class="tab-link">
                 <span class="tab-icon">🏫</span> Management System
             </a>
+            <a href="srp.html" class="tab-link">
+                <span class="tab-icon">📝</span> Student Register
+            </a>
         </div>
 
         <div class="content-area">
@@ -551,6 +553,13 @@
                     <p>සම්පූර්ණ ආයතන කළමනාකරණ පද්ධතිය වෙත පිවිසෙන්න.</p>
                     <div class="nav-card-arrow">ප්‍රවේශ වන්න →</div>
                 </a>
+
+                <a href="srp.html" class="nav-card card-violet">
+                    <div class="nav-card-icon">📝</div>
+                    <h3>Student Register</h3>
+                    <p>නව සිසුන් ලියාපදිංචි කරන්න සහ පන්ති තොරතුරු add කරන්න.</p>
+                    <div class="nav-card-arrow">ප්‍රවේශ වන්න →</div>
+                </a>
             </div>
         </div>
     </div>
@@ -573,7 +582,6 @@
             document.getElementById('adminNameDisplay').textContent = adminName;
         }
 
-        // Check existing session
         window.addEventListener('DOMContentLoaded', function () {
             const isLoggedIn = sessionStorage.getItem('sipminLoggedIn');
             const adminName = sessionStorage.getItem('sipminAdminName');
@@ -582,7 +590,6 @@
             }
         });
 
-        // Login submit
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
@@ -634,7 +641,6 @@
                     return;
                 }
 
-                // Update last login (fire-and-forget)
                 fetch(`${SUPABASE_URL}/rest/v1/credentials_sipmini?id=eq.${credential.id}`, {
                     method: 'PATCH',
                     headers: {
