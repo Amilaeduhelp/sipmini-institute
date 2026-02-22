@@ -1047,7 +1047,9 @@
         function closeSuccessModal() { document.getElementById('successModal').classList.remove('show'); }
 
         function formatStudentNo(input) {
-            return 's' + input.padStart(4, '0');
+            // Strip leading 's' or 'S' and any leading zeros, then reformat
+            const cleaned = input.toLowerCase().replace(/^s+/, '').replace(/^0+/, '') || '0';
+            return 's' + cleaned.padStart(4, '0');
         }
 
         function checkDuplicateEntry(studentNo) {
