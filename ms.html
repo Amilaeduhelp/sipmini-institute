@@ -186,7 +186,7 @@
             justify-content: center;
         }
 
-        /* MAIN APP PANEL (keeps original narrow width for usability) */
+        /* MAIN APP PANEL */
         .app-panel {
             width: 100%;
             max-width: 560px;
@@ -362,6 +362,26 @@
         .error-icon, .warning-icon { font-size: 44px; margin-bottom: 8px; }
         .success-icon { font-size: 44px; margin-bottom: 8px; color: var(--success); }
 
+        /* CLASS TYPE BADGES */
+        .class-type-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .class-type-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            background: rgba(129,140,248,0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(129,140,248,0.3);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
         /* SUBJECT CARDS */
         .subject-card {
             background: var(--surface3);
@@ -388,9 +408,11 @@
             font-size: 16px;
             margin-right: 10px;
             flex-shrink: 0;
+            vertical-align: top;
+            margin-top: 2px;
         }
 
-        .subject-info { display: inline-block; vertical-align: middle; width: calc(100% - 50px); }
+        .subject-info { display: inline-block; vertical-align: top; width: calc(100% - 50px); }
         .subject-name { font-size: 16px; font-weight: 700; color: var(--text); display: block; }
         .subject-teacher { font-size: 13px; color: var(--text-muted); margin-top: 2px; display: block; }
         .subject-payment { font-size: 13px; margin-top: 5px; display: block; }
@@ -407,6 +429,7 @@
         .info-row:last-of-type { border-bottom: none; }
         .info-label { font-weight: 600; color: var(--text-muted); font-size: 14px; flex: 1; }
         .info-value { color: var(--text); font-size: 14px; text-align: right; flex: 1; }
+        .info-value-wrap { color: var(--text); font-size: 14px; text-align: right; flex: 1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
 
         /* PAYMENT STATUS BADGES */
         .payment-status {
@@ -815,6 +838,11 @@
                     <span class="info-label">විෂය:</span>
                     <span class="info-value" id="subject"></span>
                 </div>
+                <!-- NEW: Class Type row -->
+                <div class="info-row" id="classTypeRow" style="display:none;">
+                    <span class="info-label">පන්ති වර්ගය:</span>
+                    <span class="info-value-wrap" id="classTypeValue"></span>
+                </div>
                 <div class="info-row">
                     <span class="info-label">ගුරුවරයා:</span>
                     <span class="info-value" id="teacherName"></span>
@@ -1115,6 +1143,13 @@
             return { status: 'ගෙවා නැත', paid: false, canPay: true, paidAmount: 0 };
         }
 
+        // ── Helper: render class_type string as badge HTML ──
+        function renderClassTypeBadges(classType) {
+            if (!classType || classType.trim() === '') return '';
+            return classType.split('/').map(t => t.trim()).filter(Boolean)
+                .map(t => `<span class="class-type-badge">📋 ${t}</span>`).join('');
+        }
+
         async function handleOK() {
             if (!supabaseClient) { showErrorModal('Supabase සම්බන්ධ වී නැත. පිටුව නැවත පූරණය කරන්න.'); return; }
             if (currentDisplay === '') { showErrorModal('කරුණාකර ශිෂ්‍ය අංකයක් ඇතුළත් කරන්න'); return; }
@@ -1203,11 +1238,17 @@
                 const paymentStatus = checkCurrentMonthPayment(subject.payment, subject.monthly_fee);
                 let statusClass = paymentStatus.paid ? 'status-paid' : (paymentStatus.paidAmount > 0 ? 'status-partial' : 'status-unpaid');
 
+                // Build class type badges HTML
+                const classTypeBadgesHTML = subject.class_type
+                    ? `<div class="class-type-badges">${renderClassTypeBadges(subject.class_type)}</div>`
+                    : '';
+
                 card.innerHTML = `
                     <span class="subject-number">${index + 1}</span>
                     <div class="subject-info">
                         <span class="subject-name">${subject.subject}</span>
                         <span class="subject-teacher">👨‍🏫 ${subject.teachername}</span>
+                        ${classTypeBadgesHTML}
                         <span class="subject-payment">
                             <span class="payment-status ${statusClass}">${paymentStatus.status}</span>
                         </span>
@@ -1233,6 +1274,17 @@
             document.getElementById('teacherName').textContent = currentStudent.teachername;
             document.getElementById('monthlyFee').textContent =
                 (!currentStudent.monthly_fee) ? 'FREE CARD' : 'Rs. ' + currentStudent.monthly_fee;
+
+            // ── Show class_type badges ──
+            const classTypeRow = document.getElementById('classTypeRow');
+            const classTypeValue = document.getElementById('classTypeValue');
+            if (currentStudent.class_type && currentStudent.class_type.trim() !== '') {
+                classTypeValue.innerHTML = renderClassTypeBadges(currentStudent.class_type);
+                classTypeRow.style.display = 'flex';
+            } else {
+                classTypeRow.style.display = 'none';
+                classTypeValue.innerHTML = '';
+            }
 
             let statusClass = paymentStatus.paid ? 'status-paid' : (paymentStatus.paidAmount > 0 ? 'status-partial' : 'status-unpaid');
             document.getElementById('paymentStatus').innerHTML =
